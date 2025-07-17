@@ -181,74 +181,61 @@
                                 <i class="fas fa-phone text-danger me-2"></i>Contact Info
                             </h5>
 
-                            <!-- Emergency Contacts -->
-                            <div class="contact-section mb-4">
-                                <h6 class="contact-category">
-                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Emergency
-                                </h6>
-                                <div class="contact-items">
-                                    <div class="contact-item emergency-contact">
-                                        <div class="contact-icon">
-                                            <i class="fas fa-phone"></i>
-                                        </div>
-                                        <div class="contact-details">
-                                            <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="contact-link">
-                                                <?php echo formatPhone(PHONE_PRIMARY); ?>
-                                            </a>
-                                            <small class="contact-label">Primary Line</small>
-                                        </div>
+                            <!-- Primary Emergency Contact -->
+                            <div class="contact-section mb-3">
+                                <div class="emergency-highlight-box">
+                                    <div class="emergency-header">
+                                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                        <span class="fw-bold text-warning">EMERGENCY HOTLINE</span>
                                     </div>
-                                    <div class="contact-item emergency-contact">
-                                        <div class="contact-icon">
-                                            <i class="fas fa-phone"></i>
-                                        </div>
-                                        <div class="contact-details">
-                                            <a href="tel:<?php echo formatPhoneForCall(PHONE_SECONDARY); ?>" class="contact-link">
-                                                <?php echo formatPhone(PHONE_SECONDARY); ?>
-                                            </a>
-                                            <small class="contact-label">Secondary Line</small>
+                                    <div class="emergency-number">
+                                        <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="emergency-link">
+                                            <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_PRIMARY); ?>
+                                        </a>
+                                         <a href="tel:<?php echo formatPhoneForCall(PHONE_SECONDARY); ?>" class="emergency-link">
+                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_SECONDARY); ?>
+                                        </a>
+                                        <a href="tel:<?php echo formatPhoneForCall(PHONE_TERTIARY); ?>" class="emergency-link">
+                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_TERTIARY); ?>
+                                        </a>
+                                        <div class="availability-badge">
+                                            <i class="fas fa-clock me-1"></i>24x7 Available
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- General Contacts -->
-                            <div class="contact-section mb-4">
-                                <h6 class="contact-category">
-                                    <i class="fas fa-info-circle text-info me-2"></i>General
-                                </h6>
-                                <div class="contact-items">
-                                    <div class="contact-item d-none">
-                                        <div class="contact-icon">
-                                            <i class="fas fa-envelope"></i>
-                                        </div>
-                                        <div class="contact-details">
-                                            <a href="mailto:<?php echo EMAIL; ?>" class="contact-link"><?php echo EMAIL; ?></a>
-                                            <small class="contact-label">Email Support</small>
-                                        </div>
-                                    </div>
-                                    <div class="contact-item">
-                                        <div class="contact-icon">
-                                            <i class="fab fa-whatsapp"></i>
-                                        </div>
-                                        <div class="contact-details">
-                                            <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="contact-link" target="_blank">WhatsApp</a>
-                                            <small class="contact-label">Quick Support</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- Address -->
                             <div class="contact-section">
-                                <h6 class="contact-category">
-                                    <i class="fas fa-map-marker-alt text-success me-2"></i>Location
+                                <h6 class="contact-category mb-3">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>Our Location
                                 </h6>
                                 <div class="address-info">
-                                    <p class="address-text"><?php echo ADDRESS; ?></p>
-                                    <a href="https://maps.google.com/?q=<?php echo urlencode(ADDRESS); ?>" class="btn btn-outline-light btn-sm" target="_blank">
-                                        <i class="fas fa-directions me-1"></i>Get Directions
-                                    </a>
+                                    <div class="address-content">
+                                        <i class="fas fa-building text-muted me-2"></i>
+                                        <span class="address-text"><?php echo ADDRESS; ?></span>
+                                    </div>
+                                    <div class="location-features mt-2">
+                                        <div class="location-feature">
+                                            <i class="fas fa-hospital text-info me-1"></i>
+                                            <small>Near Ramkrishna Care Hospital</small>
+                                        </div>
+                                        <div class="location-feature">
+                                            <i class="fas fa-parking text-success me-1"></i>
+                                            <small>Parking Available</small>
+                                        </div>
+                                    </div>
+                                    <div class="location-actions mt-3">
+                                        <a href="https://maps.google.com/?q=<?php echo urlencode(ADDRESS); ?>"
+                                           class="btn btn-outline-light btn-sm me-2"
+                                           target="_blank">
+                                            <i class="fas fa-directions me-1"></i>Directions
+                                        </a>
+                                        <a href="contact" class="btn btn-outline-warning btn-sm">
+                                            <i class="fas fa-info-circle me-1"></i>More Info
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -402,359 +402,357 @@ function initEnhancedInteractions() {
         }
     );
 
-        // Service area card interactions
-        const serviceAreaCards = document.querySelectorAll('.service-area-card');
-        serviceAreaCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                const badge = this.querySelector('.badge');
-                if (badge) {
-                    badge.style.transform = 'scale(1.1)';
-                }
-            });
+    // Service area card interactions
+    $('.service-area-card').hover(
+        function() {
+            var $badge = $(this).find('.badge');
+            if ($badge.length) {
+                $badge.css('transform', 'scale(1.1)');
+            }
+        },
+        function() {
+            var $badge = $(this).find('.badge');
+            if ($badge.length) {
+                $badge.css('transform', 'scale(1)');
+            }
+        }
+    );
 
-            card.addEventListener('mouseleave', function() {
-                const badge = this.querySelector('.badge');
-                if (badge) {
-                    badge.style.transform = 'scale(1)';
-                }
-            });
+    // Why choose us card stagger animation
+    var $whyChooseCards = $('.why-choose-card');
+
+    $whyChooseCards.each(function(index) {
+        $(this).css({
+            'opacity': '0',
+            'transform': 'translateY(30px)',
+            'transition': 'all 0.6s ease-out ' + (index * 0.1) + 's'
         });
+    });
 
-        // Why choose us card stagger animation
-        const whyChooseCards = document.querySelectorAll('.why-choose-card');
-        const staggerObserver = new IntersectionObserver(function(entries) {
-            entries.forEach((entry, index) => {
+    // Use scroll event for stagger animation
+    $(window).scroll(function() {
+        $whyChooseCards.each(function(index) {
+            var $card = $(this);
+            var elementTop = $card.offset().top;
+            var elementBottom = elementTop + $card.outerHeight();
+            var viewportTop = $(window).scrollTop();
+            var viewportBottom = viewportTop + $(window).height();
+
+            if (elementBottom > viewportTop && elementTop < (viewportBottom - $(window).height() * 0.2)) {
+                setTimeout(function() {
+                    $card.css({
+                        'opacity': '1',
+                        'transform': 'translateY(0)'
+                    });
+                }, index * 100);
+            }
+        });
+    });
+}
+
+// Emergency Call Tracking (Optional Analytics) - jQuery Version
+function trackEmergencyCall() {
+    $('a[href^="tel:"]').click(function() {
+        // You can add analytics tracking here
+        console.log('Emergency call initiated');
+
+        // Example: Google Analytics event tracking
+        // gtag('event', 'emergency_call', {
+        //     'event_category': 'engagement',
+        //     'event_label': 'phone_call'
+        // });
+    });
+}
+
+// WhatsApp Link Tracking - jQuery Version
+function trackWhatsAppClick() {
+    $('a[href*="wa.me"]').click(function() {
+        console.log('WhatsApp link clicked');
+
+        // Example: Analytics tracking
+        // gtag('event', 'whatsapp_click', {
+        //     'event_category': 'engagement',
+        //     'event_label': 'whatsapp_contact'
+        // });
+    });
+}
+
+// Initialize tracking
+trackEmergencyCall();
+trackWhatsAppClick();
+
+// Loading Animation for Forms - jQuery Version
+$('button[type="submit"]').click(function() {
+    var $button = $(this);
+    var $form = $button.closest('form');
+
+    if ($form.length && $form[0].checkValidity()) {
+        $button.html('<i class="fas fa-spinner fa-spin me-2"></i>Sending...');
+        $button.prop('disabled', true);
+
+        // Re-enable after 3 seconds (adjust based on actual form processing time)
+        setTimeout(function() {
+            $button.html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+            $button.prop('disabled', false);
+        }, 3000);
+    }
+});
+
+// Navbar Scroll Effect - jQuery Version
+$(window).scroll(function() {
+    var $navbar = $('.navbar');
+    if ($navbar.length) {
+        if ($(window).scrollTop() > 100) {
+            $navbar.addClass('shadow');
+        } else {
+            $navbar.removeClass('shadow');
+        }
+    }
+});
+
+// Auto-hide alerts after 5 seconds - jQuery Version
+$('.alert').each(function() {
+    var $alert = $(this);
+    setTimeout(function() {
+        $alert.fadeOut(300, function() {
+            $(this).remove();
+        });
+    }, 5000);
+});
+
+// Modern Lazy Loading - jQuery Version
+function initLazyLoading() {
+    if ('IntersectionObserver' in window) {
+        var imageObserver = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(function(entry) {
                 if (entry.isIntersecting) {
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, index * 100);
+                    var $img = $(entry.target);
+                    $img.attr('src', $img.data('src'));
+                    $img.removeClass('lazy');
+                    $img.addClass('fade-in');
+                    observer.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.2 });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
 
-        whyChooseCards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = `all 0.6s ease-out ${index * 0.1}s`;
-            staggerObserver.observe(card);
+        $('img[data-src]').each(function() {
+            imageObserver.observe(this);
         });
     }
+}
 
-    // Emergency Call Tracking (Optional Analytics)
-    function trackEmergencyCall() {
-        const emergencyLinks = document.querySelectorAll('a[href^="tel:"]');
-        
-        emergencyLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                // You can add analytics tracking here
-                console.log('Emergency call initiated');
-                
-                // Example: Google Analytics event tracking
-                // gtag('event', 'emergency_call', {
-                //     'event_category': 'engagement',
-                //     'event_label': 'phone_call'
-                // });
-            });
-        });
-    }
-    
-    // WhatsApp Link Tracking
-    function trackWhatsAppClick() {
-        const whatsappLinks = document.querySelectorAll('a[href*="wa.me"]');
-        
-        whatsappLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                console.log('WhatsApp link clicked');
-                
-                // Example: Analytics tracking
-                // gtag('event', 'whatsapp_click', {
-                //     'event_category': 'engagement',
-                //     'event_label': 'whatsapp_contact'
-                // });
-            });
-        });
-    }
-    
-    // Initialize tracking
-    trackEmergencyCall();
-    trackWhatsAppClick();
-    
-    // Loading Animation for Forms
-    const submitButtons = document.querySelectorAll('button[type="submit"]');
-    submitButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const form = this.closest('form');
-            if (form && form.checkValidity()) {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
-                this.disabled = true;
-                
-                // Re-enable after 3 seconds (adjust based on actual form processing time)
-                setTimeout(() => {
-                    this.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Message';
-                    this.disabled = false;
-                }, 3000);
-            }
-        });
-    });
-    
-    // Navbar Scroll Effect
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 100) {
-                navbar.classList.add('shadow');
-            } else {
-                navbar.classList.remove('shadow');
-            }
-        });
-    }
-    
-    // Auto-hide alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            setTimeout(() => {
-                alert.remove();
-            }, 300);
-        }, 5000);
+// Performance Optimizations - jQuery Version
+function initPerformanceOptimizations() {
+    // Preload critical resources
+    preloadCriticalResources();
+
+    // Optimize scroll performance
+    optimizeScrollPerformance();
+
+    // Implement resource hints
+    implementResourceHints();
+}
+
+function preloadCriticalResources() {
+    var criticalResources = [
+        '/assets/css/style.css',
+        '/assets/js/script.js'
+    ];
+
+    $.each(criticalResources, function(index, resource) {
+        var link = $('<link>');
+        link.attr('rel', 'preload');
+        link.attr('href', resource);
+        link.attr('as', resource.endsWith('.css') ? 'style' : 'script');
+        $('head').append(link);
     });
 }
 
-    // Modern Lazy Loading with Intersection Observer
-    initLazyLoading() {
-        if ('IntersectionObserver' in window) {
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.classList.remove('lazy');
-                        img.classList.add('fade-in');
-                        observer.unobserve(img);
-                    }
-                });
-            }, {
-                rootMargin: '50px 0px',
-                threshold: 0.01
-            });
+function optimizeScrollPerformance() {
+    var ticking = false;
 
-            document.querySelectorAll('img[data-src]').forEach(img => {
-                imageObserver.observe(img);
-            });
+    function updateScrollElements() {
+        // Update scroll-dependent elements
+        var scrollY = $(window).scrollTop();
+
+        // Update navbar
+        var $navbar = $('.navbar');
+        if ($navbar.length) {
+            $navbar.css('transform', 'translateY(' + (scrollY > 100 ? '-100%' : '0') + ')');
+        }
+
+        ticking = false;
+    }
+
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollElements);
+            ticking = true;
         }
     }
 
-    // Performance Optimizations
-    initPerformanceOptimizations() {
-        // Preload critical resources
-        this.preloadCriticalResources();
+    $(window).on('scroll', requestTick);
+}
 
-        // Optimize scroll performance
-        this.optimizeScrollPerformance();
+function implementResourceHints() {
+    // DNS prefetch for external resources
+    var externalDomains = [
+        'fonts.googleapis.com',
+        'fonts.gstatic.com',
+        'cdn.jsdelivr.net',
+        'cdnjs.cloudflare.com'
+    ];
 
-        // Implement resource hints
-        this.implementResourceHints();
-    }
+    $.each(externalDomains, function(index, domain) {
+        var link = $('<link>');
+        link.attr('rel', 'dns-prefetch');
+        link.attr('href', '//' + domain);
+        $('head').append(link);
+    });
+}
 
-    preloadCriticalResources() {
-        const criticalResources = [
-            '/assets/css/style.css',
-            '/assets/js/script.js'
-        ];
+// Accessibility Features - jQuery Version
+function initAccessibilityFeatures() {
+    setupKeyboardNavigation();
+    setupScreenReaderSupport();
+    setupFocusManagement();
+}
 
-        criticalResources.forEach(resource => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.href = resource;
-            link.as = resource.endsWith('.css') ? 'style' : 'script';
-            document.head.appendChild(link);
-        });
-    }
+function setupKeyboardNavigation() {
+    // Enhanced keyboard navigation
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Tab') {
+            $('body').addClass('keyboard-navigation');
+        }
+    });
 
-    optimizeScrollPerformance() {
-        let ticking = false;
+    $(document).on('mousedown', function() {
+        $('body').removeClass('keyboard-navigation');
+    });
 
-        const updateScrollElements = () => {
-            // Update scroll-dependent elements
-            const scrollY = window.pageYOffset;
+    // Skip to main content
+    var skipLink = $('<a href="#main-content" class="skip-link">Skip to main content</a>');
+    $('body').prepend(skipLink);
+}
 
-            // Update navbar
-            const navbar = document.querySelector('.navbar');
-            if (navbar) {
-                navbar.style.transform = `translateY(${scrollY > 100 ? '-100%' : '0'})`;
-            }
+function setupScreenReaderSupport() {
+    // Add ARIA labels to interactive elements
+    $('button:not([aria-label])').each(function() {
+        var $button = $(this);
+        if (!$button.attr('aria-label')) {
+            var text = $button.text().trim() || $button.attr('title') || 'Button';
+            $button.attr('aria-label', text);
+        }
+    });
 
-            ticking = false;
-        };
+    // Add live region for dynamic content
+    var liveRegion = $('<div aria-live="polite" aria-atomic="true" class="sr-only" id="live-region"></div>');
+    $('body').append(liveRegion);
+}
 
-        const requestTick = () => {
-            if (!ticking) {
-                requestAnimationFrame(updateScrollElements);
-                ticking = true;
-            }
-        };
-
-        window.addEventListener('scroll', requestTick, { passive: true });
-    }
-
-    implementResourceHints() {
-        // DNS prefetch for external resources
-        const externalDomains = [
-            'fonts.googleapis.com',
-            'fonts.gstatic.com',
-            'cdn.jsdelivr.net',
-            'cdnjs.cloudflare.com'
-        ];
-
-        externalDomains.forEach(domain => {
-            const link = document.createElement('link');
-            link.rel = 'dns-prefetch';
-            link.href = `//${domain}`;
-            document.head.appendChild(link);
-        });
-    }
-
-    // Accessibility Features
-    initAccessibilityFeatures() {
-        this.setupKeyboardNavigation();
-        this.setupScreenReaderSupport();
-        this.setupFocusManagement();
-    }
-
-    setupKeyboardNavigation() {
-        // Enhanced keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                document.body.classList.add('keyboard-navigation');
-            }
-        });
-
-        document.addEventListener('mousedown', () => {
-            document.body.classList.remove('keyboard-navigation');
-        });
-
-        // Skip to main content
-        const skipLink = document.createElement('a');
-        skipLink.href = '#main-content';
-        skipLink.className = 'skip-link';
-        skipLink.textContent = 'Skip to main content';
-        document.body.insertBefore(skipLink, document.body.firstChild);
-    }
-
-    setupScreenReaderSupport() {
-        // Add ARIA labels to interactive elements
-        const buttons = document.querySelectorAll('button:not([aria-label])');
-        buttons.forEach(button => {
-            if (!button.getAttribute('aria-label')) {
-                const text = button.textContent.trim() || button.title || 'Button';
-                button.setAttribute('aria-label', text);
-            }
-        });
-
-        // Add live region for dynamic content
-        const liveRegion = document.createElement('div');
-        liveRegion.setAttribute('aria-live', 'polite');
-        liveRegion.setAttribute('aria-atomic', 'true');
-        liveRegion.className = 'sr-only';
-        liveRegion.id = 'live-region';
-        document.body.appendChild(liveRegion);
-    }
-
-    setupFocusManagement() {
-        // Trap focus in modals
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modal = document.querySelector('.modal.show');
-                if (modal) {
-                    const closeButton = modal.querySelector('[data-bs-dismiss="modal"]');
-                    if (closeButton) closeButton.click();
+function setupFocusManagement() {
+    // Trap focus in modals
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var $modal = $('.modal.show');
+            if ($modal.length) {
+                var $closeButton = $modal.find('[data-bs-dismiss="modal"]');
+                if ($closeButton.length) {
+                    $closeButton.click();
                 }
             }
+        }
+    });
+}
+
+// PWA Features - jQuery Version
+function initPWAFeatures() {
+    setupInstallPrompt();
+    setupOfflineSupport();
+    setupPushNotifications();
+}
+
+function setupInstallPrompt() {
+    var deferredPrompt;
+
+    $(window).on('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredPrompt = e.originalEvent;
+
+        // Show install button
+        var $installButton = $('<button class="btn btn-primary install-app-btn"><i class="fas fa-download me-2"></i>Install App</button>');
+        $installButton.css({
+            'position': 'fixed',
+            'bottom': '20px',
+            'right': '20px',
+            'z-index': '1000'
         });
-    }
 
-    // PWA Features
-    initPWAFeatures() {
-        this.setupInstallPrompt();
-        this.setupOfflineSupport();
-        this.setupPushNotifications();
-    }
-
-    setupInstallPrompt() {
-        let deferredPrompt;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-
-            // Show install button
-            const installButton = document.createElement('button');
-            installButton.className = 'btn btn-primary install-app-btn';
-            installButton.innerHTML = '<i class="fas fa-download me-2"></i>Install App';
-            installButton.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000;';
-
-            installButton.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User response to the install prompt: ${outcome}`);
+        $installButton.click(function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function(choiceResult) {
+                    console.log('User response to the install prompt: ' + choiceResult.outcome);
                     deferredPrompt = null;
-                    installButton.remove();
-                }
-            });
-
-            document.body.appendChild(installButton);
-        });
-    }
-
-    setupOfflineSupport() {
-        window.addEventListener('online', () => {
-            this.showNotification('Connection restored', 'success');
-        });
-
-        window.addEventListener('offline', () => {
-            this.showNotification('You are offline. Some features may not work.', 'warning');
-        });
-    }
-
-    setupPushNotifications() {
-        if ('Notification' in window && 'serviceWorker' in navigator) {
-            // Request notification permission
-            if (Notification.permission === 'default') {
-                Notification.requestPermission().then(permission => {
-                    console.log('Notification permission:', permission);
+                    $installButton.remove();
                 });
             }
+        });
+
+        $('body').append($installButton);
+    });
+}
+
+function setupOfflineSupport() {
+    $(window).on('online', function() {
+        showNotification('Connection restored', 'success');
+    });
+
+    $(window).on('offline', function() {
+        showNotification('You are offline. Some features may not work.', 'warning');
+    });
+}
+
+function setupPushNotifications() {
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+        // Request notification permission
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(function(permission) {
+                console.log('Notification permission:', permission);
+            });
         }
-    }
-
-    // Utility method for notifications
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1060; max-width: 300px;';
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
     }
 }
 
-// Initialize the application
-const app = new FriendsAmbulanceApp();
+// Utility method for notifications - jQuery Version
+function showNotification(message, type) {
+    type = type || 'info';
+    var $notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show position-fixed">' +
+        message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>');
 
-// Utility Functions
+    $notification.css({
+        'top': '20px',
+        'right': '20px',
+        'z-index': '1060',
+        'max-width': '300px'
+    });
+
+    $('body').append($notification);
+
+    setTimeout(function() {
+        $notification.remove();
+    }, 5000);
+}
+
+// Utility Functions - jQuery Compatible
 function formatPhoneNumber(phone) {
-    const cleaned = phone.replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{5})(\d{2})(\d{3})$/);
+    var cleaned = phone.replace(/\D/g, '');
+    var match = cleaned.match(/^(\d{5})(\d{2})(\d{3})$/);
     if (match) {
         return match[1] + ' ' + match[2] + ' ' + match[3];
     }
@@ -762,11 +760,14 @@ function formatPhoneNumber(phone) {
 }
 
 function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
 function validatePhone(phone) {
-    const cleaned = phone.replace(/\D/g, '');
+    var cleaned = phone.replace(/\D/g, '');
     return cleaned.length === 10;
 }
+
+// jQuery Ready - All functions initialized
+console.log('✅ Friends Ambulance Service - All functions converted to jQuery successfully!');
