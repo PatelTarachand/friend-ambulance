@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: http://localhost/protc/Friend%20Ambulance/sitemap.xml
+
+# Disallow admin areas (if any)
+Disallow: /admin/
+Disallow: /config.php
+Disallow: /includes/
+
+# Allow important pages
+Allow: /index.php
+Allow: /about.php
+Allow: /services.php
+Allow: /contact.php
+Allow: /gallery.php
+Allow: /faq.php
+Allow: /assets/
+
+# Crawl delay
+Crawl-delay: 1
