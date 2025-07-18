@@ -4,7 +4,6 @@ require_once 'includes/upload.php';
 
 $action = $_GET['action'] ?? 'list';
 $id = $_GET['id'] ?? null;
-$category = $_GET['category'] ?? 'all';
 $message = '';
 $error = '';
 
@@ -17,7 +16,6 @@ if ($_POST) {
         if ($action === 'add' || $action === 'edit') {
             $title = trim($_POST['title'] ?? '');
             $description = trim($_POST['description'] ?? '');
-            $category = $_POST['category'] ?? 'ambulances';
             $sort_order = intval($_POST['sort_order'] ?? 0);
             $is_active = isset($_POST['is_active']) ? 1 : 0;
             
@@ -29,24 +27,30 @@ if ($_POST) {
                     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                         $upload = new ImageUpload();
                         $result = $upload->uploadImage($_FILES['image'], 'gallery');
-                        
+
                         if ($result['success']) {
-                            executeQuery(
-                                "INSERT INTO gallery_images (title, description, image_path, thumbnail_path, category, is_active, sort_order, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                [$title, $description, $result['path'], $result['thumbnail'], $category, $is_active, $sort_order, $_SESSION['admin_user_id']]
+                            $success = executeQuery(
+                                "INSERT INTO gallery_images (title, description, image_path, thumbnail_path, is_active, sort_order, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                [$title, $description, $result['path'], $result['thumbnail'], $is_active, $sort_order, $_SESSION['admin_user_id']]
                             );
-                            $message = 'Gallery image added successfully!';
-                            $action = 'list';
+
+                            if ($success) {
+                                $message = 'Gallery image added successfully!';
+                                $action = 'list';
+                            } else {
+                                $error = 'Failed to save image data.';
+                            }
                         } else {
                             $error = $result['message'];
                         }
                     } else {
-                        $error = 'Please select an image file.';
+                        $uploadError = $_FILES['image']['error'] ?? 'No file selected';
+                        $error = 'Please select an image file. Upload error: ' . $uploadError;
                     }
                 } else {
                     // Handle edit gallery image
-                    $updateQuery = "UPDATE gallery_images SET title = ?, description = ?, category = ?, is_active = ?, sort_order = ?, updated_at = ? WHERE id = ?";
-                    $updateParams = [$title, $description, $category, $is_active, $sort_order, date('Y-m-d H:i:s'), $id];
+                    $updateQuery = "UPDATE gallery_images SET title = ?, description = ?, is_active = ?, sort_order = ?, updated_at = ? WHERE id = ?";
+                    $updateParams = [$title, $description, $is_active, $sort_order, date('Y-m-d H:i:s'), $id];
                     
                     // Handle image update if new image uploaded
                     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -60,8 +64,8 @@ if ($_POST) {
                                 $upload->deleteImage($oldGallery['image_path'], $oldGallery['thumbnail_path']);
                             }
                             
-                            $updateQuery = "UPDATE gallery_images SET title = ?, description = ?, image_path = ?, thumbnail_path = ?, category = ?, is_active = ?, sort_order = ?, updated_at = ? WHERE id = ?";
-                            $updateParams = [$title, $description, $result['path'], $result['thumbnail'], $category, $is_active, $sort_order, date('Y-m-d H:i:s'), $id];
+                            $updateQuery = "UPDATE gallery_images SET title = ?, description = ?, image_path = ?, thumbnail_path = ?, is_active = ?, sort_order = ?, updated_at = ? WHERE id = ?";
+                            $updateParams = [$title, $description, $result['path'], $result['thumbnail'], $is_active, $sort_order, date('Y-m-d H:i:s'), $id];
                         } else {
                             $error = $result['message'];
                         }
@@ -100,27 +104,16 @@ if ($action === 'edit' && $id) {
 // Get gallery images for list view
 $galleryImages = [];
 if ($action === 'list') {
-    $whereClause = $category !== 'all' ? "WHERE g.category = ?" : "";
-    $params = $category !== 'all' ? [$category] : [];
-    
     $galleryImages = getMultipleRecords(
-        "SELECT g.*, u.full_name as created_by_name 
-         FROM gallery_images g 
-         LEFT JOIN admin_users u ON g.created_by = u.id 
-         $whereClause
-         ORDER BY g.sort_order ASC, g.created_at DESC",
-        $params
+        "SELECT g.*, u.full_name as created_by_name
+         FROM gallery_images g
+         LEFT JOIN admin_users u ON g.created_by = u.id
+         ORDER BY g.sort_order ASC, g.created_at DESC"
     );
 }
 
-// Get category counts
-$categoryCounts = [
-    'all' => getSingleRecord("SELECT COUNT(*) as count FROM gallery_images")['count'],
-    'ambulances' => getSingleRecord("SELECT COUNT(*) as count FROM gallery_images WHERE category = 'ambulances'")['count'],
-    'equipment' => getSingleRecord("SELECT COUNT(*) as count FROM gallery_images WHERE category = 'equipment'")['count'],
-    'team' => getSingleRecord("SELECT COUNT(*) as count FROM gallery_images WHERE category = 'team'")['count'],
-    'facilities' => getSingleRecord("SELECT COUNT(*) as count FROM gallery_images WHERE category = 'facilities'")['count']
-];
+// Get total count
+$totalImages = getSingleRecord("SELECT COUNT(*) as count FROM gallery_images")['count'];
 ?>
 
 <?php if ($message): ?>
@@ -148,25 +141,12 @@ $categoryCounts = [
         </a>
     </div>
     
-    <!-- Category Filter -->
+    <!-- Gallery Stats -->
     <div class="card mb-4">
         <div class="card-body">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="?category=all" class="btn btn-<?php echo $category === 'all' ? 'primary' : 'outline-primary'; ?> btn-sm">
-                    All (<?php echo $categoryCounts['all']; ?>)
-                </a>
-                <a href="?category=ambulances" class="btn btn-<?php echo $category === 'ambulances' ? 'primary' : 'outline-primary'; ?> btn-sm">
-                    Ambulances (<?php echo $categoryCounts['ambulances']; ?>)
-                </a>
-                <a href="?category=equipment" class="btn btn-<?php echo $category === 'equipment' ? 'primary' : 'outline-primary'; ?> btn-sm">
-                    Equipment (<?php echo $categoryCounts['equipment']; ?>)
-                </a>
-                <a href="?category=team" class="btn btn-<?php echo $category === 'team' ? 'primary' : 'outline-primary'; ?> btn-sm">
-                    Team (<?php echo $categoryCounts['team']; ?>)
-                </a>
-                <a href="?category=facilities" class="btn btn-<?php echo $category === 'facilities' ? 'primary' : 'outline-primary'; ?> btn-sm">
-                    Facilities (<?php echo $categoryCounts['facilities']; ?>)
-                </a>
+            <div class="d-flex align-items-center">
+                <i class="fas fa-images text-primary me-2"></i>
+                <span>Total Images: <strong><?php echo $totalImages; ?></strong></span>
             </div>
         </div>
     </div>
@@ -196,11 +176,7 @@ $categoryCounts = [
                                         <?php echo $gallery['is_active'] ? 'Active' : 'Inactive'; ?>
                                     </span>
                                 </div>
-                                <div class="position-absolute top-0 start-0 p-2">
-                                    <span class="badge bg-info">
-                                        <?php echo ucfirst($gallery['category']); ?>
-                                    </span>
-                                </div>
+
                             </div>
                             <div class="card-body">
                                 <h6 class="card-title"><?php echo htmlspecialchars($gallery['title']); ?></h6>
@@ -270,21 +246,10 @@ $categoryCounts = [
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="category" class="form-label">Category *</label>
-                                    <select class="form-select" id="category" name="category" required>
-                                        <option value="ambulances" <?php echo ($galleryData['category'] ?? '') === 'ambulances' ? 'selected' : ''; ?>>Ambulances</option>
-                                        <option value="equipment" <?php echo ($galleryData['category'] ?? '') === 'equipment' ? 'selected' : ''; ?>>Equipment</option>
-                                        <option value="team" <?php echo ($galleryData['category'] ?? '') === 'team' ? 'selected' : ''; ?>>Team</option>
-                                        <option value="facilities" <?php echo ($galleryData['category'] ?? '') === 'facilities' ? 'selected' : ''; ?>>Facilities</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="sort_order" class="form-label">Sort Order</label>
-                                    <input type="number" class="form-control" id="sort_order" name="sort_order" 
+                                    <input type="number" class="form-control" id="sort_order" name="sort_order"
                                            value="<?php echo $galleryData['sort_order'] ?? 0; ?>" min="0">
                                 </div>
                             </div>

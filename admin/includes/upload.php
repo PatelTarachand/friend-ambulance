@@ -22,10 +22,17 @@ class ImageUpload {
             $this->uploadDir . 'gallery/',
             $this->uploadDir . 'thumbnails/'
         ];
-        
+
         foreach ($directories as $dir) {
             if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+                if (!mkdir($dir, 0755, true)) {
+                    error_log("Failed to create directory: $dir");
+                }
+            }
+
+            // Check if directory is writable
+            if (!is_writable($dir)) {
+                error_log("Directory not writable: $dir");
             }
         }
     }
@@ -46,9 +53,16 @@ class ImageUpload {
             $uploadPath = $this->uploadDir . $subDir . $filename;
             $relativePath = 'assets/uploads/' . $subDir . $filename;
             
+            // Check if upload directory is writable
+            $uploadDirPath = dirname($uploadPath);
+            if (!is_writable($uploadDirPath)) {
+                return ['success' => false, 'message' => 'Upload directory is not writable: ' . $uploadDirPath];
+            }
+
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-                return ['success' => false, 'message' => 'Failed to upload file'];
+                $error = error_get_last();
+                return ['success' => false, 'message' => 'Failed to upload file. Error: ' . ($error['message'] ?? 'Unknown error')];
             }
             
             // Resize image if needed

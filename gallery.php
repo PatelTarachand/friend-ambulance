@@ -4,11 +4,20 @@ include 'includes/header.php';
 // Get gallery images from database
 try {
     require_once 'admin/config/database.php';
+
+    // Get active gallery images
     $galleryImages = getMultipleRecords(
         "SELECT * FROM gallery_images WHERE is_active = 1 ORDER BY sort_order ASC, created_at DESC"
     );
+
+    // Get featured images
+    $featuredImages = getMultipleRecords(
+        "SELECT * FROM gallery_images WHERE is_active = 1 AND is_featured = 1 ORDER BY sort_order ASC"
+    );
+
 } catch (Exception $e) {
     $galleryImages = [];
+    $featuredImages = [];
 }
 
 // Group images by category
@@ -18,6 +27,7 @@ foreach ($galleryImages as $image) {
 }
 
 $hasCustomGallery = !empty($galleryImages);
+$totalImages = count($galleryImages);
 
 // Add structured data for better SEO
 $galleryStructuredData = [
@@ -113,69 +123,27 @@ $galleryStructuredData = [
     </div>
 </section>
 
-<!-- Enhanced Gallery Categories -->
-<section class="premium-gallery-categories py-4 bg-light"
-         role="region"
-         aria-labelledby="gallery-filters-heading">
+<!-- Gallery Search -->
+<section class="gallery-search-section py-4 bg-light">
     <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="text-center mb-3" data-aos="fade-up">
-                    <h2 id="gallery-filters-heading" class="h5 fw-bold text-primary mb-3">Browse by Category</h2>
-                    <p class="text-muted small">Filter images to view specific categories</p>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="text-center mb-3">
+                    <h2 class="h5 fw-bold text-primary mb-2">Search Gallery</h2>
+                    <p class="text-muted small">Find images by title or description</p>
                 </div>
-                <div class="gallery-filter-container"
-                     data-aos="fade-up"
-                     data-aos-delay="200"
-                     role="group"
-                     aria-label="Gallery category filters">
-                    <div class="d-flex flex-wrap justify-content-center gap-3">
-                        <button class="premium-gallery-filter active"
-                                data-filter="all"
-                                aria-pressed="true"
-                                data-aos="zoom-in"
-                                data-aos-delay="300">
-                            <i class="fas fa-th-large me-2" aria-hidden="true"></i>
-                            <span>All Images</span>
-                            <div class="filter-badge"><?php echo $hasCustomGallery ? count($galleryImages) : 12; ?></div>
-                        </button>
-                        <button class="premium-gallery-filter"
-                                data-filter="ambulances"
-                                aria-pressed="false"
-                                data-aos="zoom-in"
-                                data-aos-delay="400">
-                            <i class="fas fa-ambulance me-2" aria-hidden="true"></i>
-                            <span>Ambulances</span>
-                            <div class="filter-badge">3</div>
-                        </button>
-                        <button class="premium-gallery-filter"
-                                data-filter="equipment"
-                                aria-pressed="false"
-                                data-aos="zoom-in"
-                                data-aos-delay="500">
-                            <i class="fas fa-stethoscope me-2" aria-hidden="true"></i>
-                            <span>Equipment</span>
-                            <div class="filter-badge">3</div>
-                        </button>
-                        <button class="premium-gallery-filter"
-                                data-filter="team"
-                                aria-pressed="false"
-                                data-aos="zoom-in"
-                                data-aos-delay="600">
-                            <i class="fas fa-users me-2" aria-hidden="true"></i>
-                            <span>Our Team</span>
-                            <div class="filter-badge">3</div>
-                        </button>
-                        <button class="premium-gallery-filter"
-                                data-filter="facilities"
-                                aria-pressed="false"
-                                data-aos="zoom-in"
-                                data-aos-delay="700">
-                            <i class="fas fa-building me-2" aria-hidden="true"></i>
-                            <span>Facilities</span>
-                            <div class="filter-badge">3</div>
-                        </button>
-                    </div>
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control"
+                           id="gallerySearch"
+                           placeholder="Search images by title, description..."
+                           aria-label="Search gallery images">
+                    <button class="btn btn-outline-primary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -196,7 +164,6 @@ $galleryStructuredData = [
                 <!-- Dynamic Gallery Images from Database -->
                 <?php $imageIndex = 0; foreach ($galleryImages as $image): $imageIndex++; ?>
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="<?php echo htmlspecialchars($image['category']); ?>"
                      data-aos="fade-up"
                      data-aos-delay="<?php echo ($imageIndex % 6) * 100; ?>"
                      role="gridcell">
@@ -205,21 +172,45 @@ $galleryStructuredData = [
                          aria-labelledby="image-<?php echo $imageIndex; ?>">
                         <div class="gallery-image-container">
                             <div class="gallery-image" style="height: 280px; overflow: hidden;">
-                                <img src="<?php echo htmlspecialchars($image['thumbnail_path'] ?: $image['image_path']); ?>"
-                                     alt="<?php echo htmlspecialchars($image['title']); ?>"
-                                     class="w-100 h-100"
-                                     style="object-fit: cover;"
-                                     loading="lazy">
+                                <?php
+                                $imageSrc = $image['thumbnail_path'] ?: $image['image_path'];
+                                $fullImageSrc = $image['image_path'];
+                                $imageExists = file_exists($imageSrc);
+                                ?>
+
+                                <?php if ($imageExists): ?>
+                                    <img src="<?php echo htmlspecialchars($imageSrc); ?>"
+                                         alt="<?php echo htmlspecialchars($image['alt_text'] ?: $image['title']); ?>"
+                                         class="w-100 h-100"
+                                         style="object-fit: cover;"
+                                         loading="lazy"
+                                         onerror="this.src='assets/images/placeholder-gallery.jpg'">
+                                <?php else: ?>
+                                    <!-- Fallback placeholder -->
+                                    <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
+                                        <div class="text-center">
+                                            <i class="fas fa-image text-muted fs-1 mb-2"></i>
+                                            <p class="text-muted small">Image not found</p>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="image-overlay">
                                     <div class="overlay-content">
                                         <button class="btn btn-light btn-sm image-zoom"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#imageModal"
-                                                data-image="<?php echo htmlspecialchars($image['image_path']); ?>"
+                                                data-image="<?php echo htmlspecialchars($fullImageSrc); ?>"
                                                 data-title="<?php echo htmlspecialchars($image['title']); ?>"
+                                                data-description="<?php echo htmlspecialchars($image['description']); ?>"
                                                 aria-label="View larger image">
                                             <i class="fas fa-expand" aria-hidden="true"></i>
                                         </button>
+                                        <?php if ($image['is_featured']): ?>
+                                            <div class="featured-badge">
+                                                <i class="fas fa-star text-warning"></i>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -229,12 +220,19 @@ $galleryStructuredData = [
                                 <?php echo htmlspecialchars($image['title']); ?>
                             </h6>
                             <?php if ($image['description']): ?>
-                                <p class="text-muted small mb-0"><?php echo htmlspecialchars($image['description']); ?></p>
+                                <p class="text-muted small mb-2"><?php echo htmlspecialchars(substr($image['description'], 0, 100)) . (strlen($image['description']) > 100 ? '...' : ''); ?></p>
                             <?php endif; ?>
                             <div class="gallery-meta mt-2">
-                                <span class="badge bg-light text-dark">
-                                    <?php echo ucfirst(htmlspecialchars($image['category'])); ?>
+                                <span class="badge text-white"
+                                      style="background-color: <?php echo htmlspecialchars($image['category_color'] ?: '#007bff'); ?>">
+                                    <i class="<?php echo htmlspecialchars($image['category_icon'] ?: 'fas fa-image'); ?> me-1"></i>
+                                    <?php echo htmlspecialchars($image['category_name'] ?: ucfirst($image['category'])); ?>
                                 </span>
+                                <?php if ($image['is_featured']): ?>
+                                    <span class="badge bg-warning text-dark ms-1">
+                                        <i class="fas fa-star me-1"></i>Featured
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -244,7 +242,6 @@ $galleryStructuredData = [
                 <!-- Enhanced Default Gallery Items -->
                 <!-- Ambulance Images -->
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="ambulances"
                      data-aos="fade-up"
                      data-aos-delay="100"
                      role="gridcell">
@@ -282,7 +279,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="ambulances"
                      data-aos="fade-up"
                      data-aos-delay="200"
                      role="gridcell">
@@ -320,7 +316,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="ambulances"
                      data-aos="fade-up"
                      data-aos-delay="300"
                      role="gridcell">
@@ -359,7 +354,6 @@ $galleryStructuredData = [
             
                 <!-- Equipment Images -->
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="equipment"
                      data-aos="fade-up"
                      data-aos-delay="400"
                      role="gridcell">
@@ -397,7 +391,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="equipment"
                      data-aos="fade-up"
                      data-aos-delay="500"
                      role="gridcell">
@@ -435,7 +428,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="equipment"
                      data-aos="fade-up"
                      data-aos-delay="600"
                      role="gridcell">
@@ -474,7 +466,6 @@ $galleryStructuredData = [
             
                 <!-- Team Images -->
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="team"
                      data-aos="fade-up"
                      data-aos-delay="100"
                      role="gridcell">
@@ -512,7 +503,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="team"
                      data-aos="fade-up"
                      data-aos-delay="200"
                      role="gridcell">
@@ -550,7 +540,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="team"
                      data-aos="fade-up"
                      data-aos-delay="300"
                      role="gridcell">
@@ -589,7 +578,6 @@ $galleryStructuredData = [
             
                 <!-- Facilities Images -->
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="facilities"
                      data-aos="fade-up"
                      data-aos-delay="400"
                      role="gridcell">
@@ -627,7 +615,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="facilities"
                      data-aos="fade-up"
                      data-aos-delay="500"
                      role="gridcell">
@@ -665,7 +652,6 @@ $galleryStructuredData = [
                 </div>
 
                 <div class="col-lg-4 col-md-6 gallery-item"
-                     data-category="facilities"
                      data-aos="fade-up"
                      data-aos-delay="600"
                      role="gridcell">
@@ -713,19 +699,53 @@ $galleryStructuredData = [
     </div>
 </section>
 
-<!-- Image Modal -->
+<!-- Enhanced Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
                 <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
-                <img src="" alt="" class="w-100" id="modalImage">
+                <div class="row g-0">
+                    <div class="col-lg-8">
+                        <div class="image-container">
+                            <img src="" alt="" class="w-100" id="modalImage" style="max-height: 70vh; object-fit: contain;">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="image-details p-4">
+                            <h6 class="fw-bold text-primary mb-3" id="modalImageTitle">Image Title</h6>
+                            <div class="image-info">
+                                <div class="info-item mb-3" id="modalImageDescription">
+                                    <label class="fw-semibold text-muted small">Description:</label>
+                                    <p class="mb-0" id="modalDescriptionText">No description available</p>
+                                </div>
+                                <div class="info-item mb-3" id="modalImageCategory">
+                                    <label class="fw-semibold text-muted small">Category:</label>
+                                    <div id="modalCategoryBadge"></div>
+                                </div>
+                                <div class="info-item mb-3">
+                                    <label class="fw-semibold text-muted small">Actions:</label>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="downloadImage()">
+                                            <i class="fas fa-download me-1"></i>Download
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="shareImage()">
+                                            <i class="fas fa-share me-1"></i>Share
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Close
+                </button>
             </div>
         </div>
     </div>
@@ -736,49 +756,169 @@ $galleryStructuredData = [
 <!-- Gallery JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gallery Filter Functionality
-    const filterButtons = document.querySelectorAll('.premium-gallery-filter');
+    // Gallery Search Functionality
     const galleryItems = document.querySelectorAll('.gallery-item');
+    const galleryContainer = document.getElementById('galleryContainer');
+    const searchInput = document.getElementById('gallerySearch');
+    const searchButton = document.getElementById('searchButton');
+    const clearSearchButton = document.getElementById('clearSearch');
 
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const filter = this.getAttribute('data-filter');
+    let isSearchMode = false;
 
-            // Update active button
-            filterButtons.forEach(btn => {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
-            });
-            this.classList.add('active');
-            this.setAttribute('aria-pressed', 'true');
-
-            // Filter gallery items
-            galleryItems.forEach(item => {
-                if (filter === 'all' || item.getAttribute('data-category') === filter) {
-                    item.style.display = 'block';
-                    item.style.animation = 'fadeIn 0.5s ease-in-out';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+    // Search functionality
+    if (searchInput && searchButton) {
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
         });
-    });
 
-    // Image Modal Functionality
+        clearSearchButton.addEventListener('click', clearSearch);
+    }
+
+    function performSearch() {
+        const query = searchInput.value.trim();
+        if (query.length < 2) {
+            alert('Please enter at least 2 characters to search');
+            return;
+        }
+
+        isSearchMode = true;
+        searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        clearSearchButton.style.display = 'inline-block';
+
+        // Simple client-side search for now
+        const searchResults = [];
+        galleryItems.forEach(item => {
+            const title = item.querySelector('h6').textContent.toLowerCase();
+            const description = item.querySelector('p') ? item.querySelector('p').textContent.toLowerCase() : '';
+
+            if (title.includes(query.toLowerCase()) || description.includes(query.toLowerCase())) {
+                searchResults.push(item);
+                item.style.display = 'block';
+                item.style.animation = 'fadeIn 0.5s ease-in-out';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        searchButton.innerHTML = '<i class="fas fa-search"></i>';
+
+        // Show results count
+        const resultsCount = searchResults.length;
+        showSearchResults(resultsCount, query);
+    }
+
+    function clearSearch() {
+        isSearchMode = false;
+        searchInput.value = '';
+        clearSearchButton.style.display = 'none';
+
+        // Show all gallery items
+        galleryItems.forEach(item => {
+            item.style.display = 'block';
+            item.style.animation = 'fadeIn 0.5s ease-in-out';
+        });
+
+        // Hide search results message
+        const searchMessage = document.getElementById('searchResultsMessage');
+        if (searchMessage) {
+            searchMessage.remove();
+        }
+    }
+
+    function showSearchResults(count, query) {
+        // Remove existing message
+        const existingMessage = document.getElementById('searchResultsMessage');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        // Create new message
+        const message = document.createElement('div');
+        message.id = 'searchResultsMessage';
+        message.className = 'alert alert-info text-center mt-3';
+        message.innerHTML = `
+            <i class="fas fa-search me-2"></i>
+            Found <strong>${count}</strong> result${count !== 1 ? 's' : ''} for "<strong>${query}</strong>"
+            <button type="button" class="btn-close ms-2" onclick="document.getElementById('clearSearch').click()"></button>
+        `;
+
+        galleryContainer.parentNode.insertBefore(message, galleryContainer);
+    }
+
+    // Enhanced Image Modal Functionality
     const imageZoomButtons = document.querySelectorAll('.image-zoom');
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('imageModalLabel');
+    const modalImageTitle = document.getElementById('modalImageTitle');
+    const modalDescriptionText = document.getElementById('modalDescriptionText');
+    const modalCategoryBadge = document.getElementById('modalCategoryBadge');
+    const modalImageDescription = document.getElementById('modalImageDescription');
+
+    let currentImageSrc = '';
 
     imageZoomButtons.forEach(button => {
         button.addEventListener('click', function() {
             const imageSrc = this.getAttribute('data-image');
             const imageTitle = this.getAttribute('data-title');
+            const imageDescription = this.getAttribute('data-description');
+            const categoryElement = this.closest('.gallery-item').querySelector('.gallery-meta .badge');
 
+            currentImageSrc = imageSrc;
+
+            // Update modal content
             modalImage.src = imageSrc;
             modalImage.alt = imageTitle;
             modalTitle.textContent = imageTitle;
+            modalImageTitle.textContent = imageTitle;
+
+            // Update description
+            if (imageDescription && imageDescription.trim() !== '') {
+                modalDescriptionText.textContent = imageDescription;
+                modalImageDescription.style.display = 'block';
+            } else {
+                modalImageDescription.style.display = 'none';
+            }
+
+            // Update category badge
+            if (categoryElement) {
+                modalCategoryBadge.innerHTML = categoryElement.outerHTML;
+            }
         });
     });
+
+    // Download image function
+    window.downloadImage = function() {
+        if (currentImageSrc) {
+            const link = document.createElement('a');
+            link.href = currentImageSrc;
+            link.download = currentImageSrc.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    // Share image function
+    window.shareImage = function() {
+        if (navigator.share && currentImageSrc) {
+            navigator.share({
+                title: modalImageTitle.textContent,
+                text: modalDescriptionText.textContent,
+                url: window.location.origin + '/' + currentImageSrc
+            }).catch(console.error);
+        } else {
+            // Fallback: copy to clipboard
+            const url = window.location.origin + '/' + currentImageSrc;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Image URL copied to clipboard!');
+            }).catch(() => {
+                alert('Image URL: ' + url);
+            });
+        }
+    };
 
     // Counter Animation
     const counters = document.querySelectorAll('.counter');

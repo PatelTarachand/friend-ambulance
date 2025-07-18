@@ -24,7 +24,8 @@ function readJsonFile($file) {
 
 // Helper function to write JSON file
 function writeJsonFile($file, $data) {
-    return file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $result = file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    return $result !== false;
 }
 
 // Helper function to generate unique ID
@@ -34,8 +35,62 @@ function generateId() {
 
 // Simulate database functions
 function executeQuery($query, $params = []) {
-    // This is a simplified implementation for basic CRUD operations
-    // In a real application, you would use a proper database
+    // Handle gallery_images operations
+    if (strpos($query, 'gallery_images') !== false) {
+        $gallery = readJsonFile(GALLERY_FILE);
+
+        if (strpos($query, 'INSERT') !== false) {
+            // Add new gallery image
+            $newImage = [
+                'id' => generateId(),
+                'title' => $params[0] ?? '',
+                'description' => $params[1] ?? '',
+                'image_path' => $params[2] ?? '',
+                'thumbnail_path' => $params[3] ?? '',
+                'is_active' => $params[4] ?? 1,
+                'sort_order' => $params[5] ?? 0,
+                'created_by' => $params[6] ?? '',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            $gallery[] = $newImage;
+            return writeJsonFile(GALLERY_FILE, $gallery);
+        } elseif (strpos($query, 'UPDATE') !== false) {
+            // Update gallery image
+            $id = end($params); // Last parameter is usually the ID
+            foreach ($gallery as &$image) {
+                if ($image['id'] === $id) {
+                    if (count($params) === 6) {
+                        // Update without image change
+                        $image['title'] = $params[0];
+                        $image['description'] = $params[1];
+                        $image['is_active'] = $params[2];
+                        $image['sort_order'] = $params[3];
+                        $image['updated_at'] = $params[4];
+                    } elseif (count($params) === 8) {
+                        // Update with image change
+                        $image['title'] = $params[0];
+                        $image['description'] = $params[1];
+                        $image['image_path'] = $params[2];
+                        $image['thumbnail_path'] = $params[3];
+                        $image['is_active'] = $params[4];
+                        $image['sort_order'] = $params[5];
+                        $image['updated_at'] = $params[6];
+                    }
+                    break;
+                }
+            }
+            return writeJsonFile(GALLERY_FILE, $gallery);
+        } elseif (strpos($query, 'DELETE') !== false) {
+            // Delete gallery image
+            $id = $params[0];
+            $gallery = array_filter($gallery, function($image) use ($id) {
+                return $image['id'] !== $id;
+            });
+            return writeJsonFile(GALLERY_FILE, array_values($gallery));
+        }
+    }
+
     return true;
 }
 

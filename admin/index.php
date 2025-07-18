@@ -3,6 +3,10 @@ require_once 'includes/auth.php';
 
 // Redirect if already logged in
 if (AdminAuth::isLoggedIn()) {
+    // Clear any output buffer to prevent header issues
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
     header('Location: dashboard.php');
     exit;
 }
@@ -14,11 +18,15 @@ $success = '';
 if ($_POST) {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    
+
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password.';
     } else {
         if (AdminAuth::login($username, $password)) {
+            // Clear any output buffer to prevent header issues
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
             header('Location: dashboard.php');
             exit;
         } else {

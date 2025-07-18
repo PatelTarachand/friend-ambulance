@@ -4583,6 +4583,104 @@ footer a:hover {
     border-radius: var(--border-radius-md);
 }
 
+/* Enhanced Gallery Features */
+.featured-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 193, 7, 0.9);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.gallery-meta .badge {
+    transition: all var(--transition-base);
+}
+
+.gallery-meta .badge:hover {
+    transform: scale(1.05);
+}
+
+/* Enhanced Modal Styles */
+.image-details {
+    background: #f8f9fa;
+    height: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.info-item label {
+    display: block;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.image-container {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+}
+
+/* Dynamic Category Colors */
+.premium-gallery-filter:hover {
+    border-color: inherit !important;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.premium-gallery-filter.active {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.premium-gallery-filter.active i {
+    color: white !important;
+}
+
+/* Placeholder Styles */
+.gallery-image .bg-light {
+    border: 2px dashed #dee2e6;
+    transition: all var(--transition-base);
+}
+
+.premium-gallery-card:hover .gallery-image .bg-light {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.05) !important;
+}
+
+/* Loading States */
+.gallery-item.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.gallery-item.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--primary-color);
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Responsive Design for Gallery */
 @media (max-width: 768px) {
     .premium-gallery-filter {
@@ -4615,6 +4713,15 @@ footer a:hover {
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
+    }
+
+    .image-details {
+        max-height: none;
+        height: auto;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
     }
 }
 

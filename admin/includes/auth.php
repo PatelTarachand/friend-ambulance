@@ -1,7 +1,9 @@
 <?php
 // Admin Authentication System
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../config/database.php';
 
 class AdminAuth {
@@ -58,7 +60,7 @@ class AdminAuth {
             'expires_at' => date('Y-m-d H:i:s', time() + (24 * 60 * 60))
         ];
         writeJsonFile(SESSIONS_FILE, $sessions);
-        
+
         // Set session variables
         $_SESSION['admin_session_id'] = $sessionId;
         $_SESSION['admin_user_id'] = $user['id'];
@@ -66,47 +68,41 @@ class AdminAuth {
         $_SESSION['admin_full_name'] = $user['full_name'];
         $_SESSION['admin_role'] = $user['role'];
         $_SESSION['admin_logged_in'] = true;
-        
-        // Set secure cookie
+
+        // Set secure cookie with correct path
+        $adminPath = '/protc/Friend/admin/';
         setcookie('admin_session', $sessionId, [
             'expires' => time() + (24 * 60 * 60),
-            'path' => '/admin/',
-            'secure' => isset($_SERVER['HTTPS']),
+            'path' => $adminPath,
+            'secure' => false, // Set to false for localhost
             'httponly' => true,
-            'samesite' => 'Strict'
+            'samesite' => 'Lax' // Changed from Strict to Lax for localhost
         ]);
     }
     
     // Check if user is logged in
     public static function isLoggedIn() {
+        // Basic session check
         if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
             return false;
         }
 
-        // Verify session in file
-        $sessionId = $_SESSION['admin_session_id'] ?? '';
-        $sessions = readJsonFile(SESSIONS_FILE);
-        $users = readJsonFile(USERS_FILE);
-
-        $validSession = false;
-        foreach ($sessions as $session) {
-            if ($session['id'] === $sessionId && $session['expires_at'] > date('Y-m-d H:i:s')) {
-                // Check if user is still active
-                foreach ($users as $user) {
-                    if ($user['id'] === $session['user_id'] && $user['is_active'] == 1) {
-                        $validSession = true;
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        if (!$validSession) {
-            self::logout();
+        // Check if required session variables exist
+        if (!isset($_SESSION['admin_user_id']) || !isset($_SESSION['admin_session_id'])) {
             return false;
         }
 
-        return true;
+        // Verify user is still active
+        $users = readJsonFile(USERS_FILE);
+        foreach ($users as $user) {
+            if ($user['id'] === $_SESSION['admin_user_id'] && $user['is_active'] == 1) {
+                return true;
+            }
+        }
+
+        // User not found or inactive, logout
+        self::logout();
+        return false;
     }
     
     // Get current user info
@@ -141,16 +137,21 @@ class AdminAuth {
         session_destroy();
 
         // Clear cookie
+        $adminPath = '/protc/Friend/admin/';
         setcookie('admin_session', '', [
             'expires' => time() - 3600,
-            'path' => '/admin/'
+            'path' => $adminPath
         ]);
     }
     
     // Require login (redirect if not logged in)
     public static function requireLogin() {
         if (!self::isLoggedIn()) {
-            header('Location: /admin/login.php');
+            // Clear any output buffer to prevent header issues
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Location: index.php');
             exit;
         }
     }
