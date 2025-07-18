@@ -1,6 +1,65 @@
 <?php
-require_once 'config.php';
+// Define essential constants first (emergency fallback)
+if (!defined('SITE_NAME')) define('SITE_NAME', 'Friends Ambulance Service');
+if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
+if (!defined('META_DESCRIPTION')) define('META_DESCRIPTION', 'Friends Ambulance Service provides 24/7 emergency ambulance services in Raipur, Chhattisgarh.');
+if (!defined('META_KEYWORDS')) define('META_KEYWORDS', 'ambulance service raipur, emergency ambulance, BLS ambulance, ALS ambulance');
+if (!defined('PHONE_PRIMARY')) define('PHONE_PRIMARY', '93299 62163');
+if (!defined('EMAIL')) define('EMAIL', 'info@friendsambulance.com');
+if (!defined('ADDRESS')) define('ADDRESS', 'Raipur, Chhattisgarh');
+if (!defined('WHATSAPP')) define('WHATSAPP', '919329962163');
+if (!defined('FACEBOOK')) define('FACEBOOK', '#');
+if (!defined('TWITTER')) define('TWITTER', '#');
+if (!defined('INSTAGRAM')) define('INSTAGRAM', '#');
+
+// Define getCurrentPage function if not already defined
+if (!function_exists('getCurrentPage')) {
+    function getCurrentPage() {
+        return basename($_SERVER['PHP_SELF'], '.php');
+    }
+}
+
+// Load configuration with comprehensive error handling
+$configLoaded = false;
+
+// First, try to load dynamic configuration from database
+try {
+    $dynamicConfigFile = __DIR__ . '/dynamic-config.php';
+    if (file_exists($dynamicConfigFile)) {
+        require_once $dynamicConfigFile;
+        // Check if essential constants are defined
+        if (defined('SITE_NAME') && defined('PHONE_PRIMARY') && defined('EMAIL')) {
+            $configLoaded = true;
+        }
+    }
+} catch (Exception $e) {
+    $error_msg = "Dynamic config failed: " . $e->getMessage() .
+                " in " . $e->getFile() . " on line " . $e->getLine();
+    error_log("[HEADER] " . $error_msg);
+
+    // Also log to custom file
+    $custom_log = __DIR__ . '/../logs/php_errors.log';
+    $log_dir = dirname($custom_log);
+    if (!is_dir($log_dir)) {
+        @mkdir($log_dir, 0755, true);
+    }
+    error_log("[" . date('Y-m-d H:i:s') . "] [HEADER] " . $error_msg . "\n", 3, $custom_log);
+}
+
+// Fallback to static config if dynamic config failed
+if (!$configLoaded) {
+    $staticConfigFile = __DIR__ . '/config.php';
+    if (file_exists($staticConfigFile)) {
+        require_once $staticConfigFile;
+        $configLoaded = true;
+    }
+}
+
+// Configuration loaded - constants are already defined above
+
 $current_page = getCurrentPage();
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -4,8 +4,7 @@ Allow: /
 # Sitemap location
 Sitemap: http://localhost/protc/Friend%20Ambulance/sitemap.xml
 
-# Disallow admin areas (if any)
-Disallow: /admin/
+# No admin areas to disallow
 Disallow: /config.php
 Disallow: /includes/
 

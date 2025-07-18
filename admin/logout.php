@@ -1,13 +1,11 @@
 <?php
-require_once 'includes/auth.php';
+session_start();
 
-// Logout user
-AdminAuth::logout();
+// Clear all session variables
+session_unset();
 
-// Clear any output buffer to prevent header issues
-if (ob_get_level()) {
-    ob_end_clean();
-}
+// Destroy the session
+session_destroy();
 
 // Redirect to login page
 header('Location: index.php');

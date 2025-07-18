@@ -1,33 +1,42 @@
 <?php
 include 'includes/header.php';
 
-// Get gallery images from database
+// Get gallery and slider images from database
 try {
-    require_once 'admin/config/database.php';
+    require_once 'admin/includes/database.php';
+
+    $db = new GalleryDB();
+    $sliderDb = new SliderDB();
 
     // Get active gallery images
-    $galleryImages = getMultipleRecords(
-        "SELECT * FROM gallery_images WHERE is_active = 1 ORDER BY sort_order ASC, created_at DESC"
-    );
+    $galleryImages = $db->getActive();
 
-    // Get featured images
-    $featuredImages = getMultipleRecords(
-        "SELECT * FROM gallery_images WHERE is_active = 1 AND is_featured = 1 ORDER BY sort_order ASC"
-    );
+    // Get active slider images for hero section
+    $sliderImages = $sliderDb->getActive();
+
+    // For compatibility, create featured images (first 6 items)
+    $featuredImages = array_slice($galleryImages, 0, 6);
+
+    // Group images by category (for now, all in one category)
+    $imagesByCategory = ['ambulances' => $galleryImages];
+
+    $hasCustomGallery = !empty($galleryImages);
+    $hasSliderImages = !empty($sliderImages);
+    $totalImages = count($galleryImages);
 
 } catch (Exception $e) {
+    // Fallback to empty arrays if database fails
     $galleryImages = [];
+    $sliderImages = [];
     $featuredImages = [];
-}
+    $imagesByCategory = [];
+    $hasCustomGallery = false;
+    $hasSliderImages = false;
+    $totalImages = 0;
 
-// Group images by category
-$imagesByCategory = [];
-foreach ($galleryImages as $image) {
-    $imagesByCategory[$image['category']][] = $image;
+    // Log error for debugging
+    error_log("Gallery database error: " . $e->getMessage());
 }
-
-$hasCustomGallery = !empty($galleryImages);
-$totalImages = count($galleryImages);
 
 // Add structured data for better SEO
 $galleryStructuredData = [
@@ -54,10 +63,157 @@ $galleryStructuredData = [
 <?php echo json_encode($galleryStructuredData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); ?>
 </script>
 
+<!-- Hero Slider Styles -->
+<style>
+.hero-slider .carousel-item {
+    transition: transform 1s ease-in-out;
+}
+
+.hero-slider .carousel-fade .carousel-item {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.hero-slider .carousel-fade .carousel-item.active {
+    opacity: 1;
+}
+
+.hero-bg {
+    transition: transform 8s ease-out;
+}
+
+.hero-slider .carousel-item.active .hero-bg {
+    transform: scale(1.05);
+}
+
+.stat-highlight {
+    background: rgba(255,255,255,0.1);
+    padding: 15px 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    text-align: center;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%;
+    opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    opacity: 1;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 5px;
+}
+</style>
+
 <!-- Main Content -->
 <main id="main-content" role="main">
 
-<!-- Enhanced Page Header -->
+<?php if ($hasSliderImages): ?>
+<!-- Dynamic Hero Slider -->
+<section class="hero-slider position-relative" role="banner" aria-labelledby="gallery-main-heading">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-indicators">
+            <?php foreach ($sliderImages as $index => $slide): ?>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<?php echo $index; ?>"
+                        <?php echo $index === 0 ? 'class="active" aria-current="true"' : ''; ?>
+                        aria-label="Slide <?php echo $index + 1; ?>"></button>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="carousel-inner">
+            <?php foreach ($sliderImages as $index => $slide): ?>
+                <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+                    <div class="hero-slide position-relative" style="height: 70vh; min-height: 500px;">
+                        <!-- Background Image -->
+                        <div class="hero-bg position-absolute w-100 h-100"
+                             style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?php echo htmlspecialchars($slide['image']); ?>') center/cover no-repeat;">
+                        </div>
+
+                        <!-- Content Overlay -->
+                        <div class="hero-content position-absolute top-50 start-50 translate-middle text-center text-white w-100">
+                            <div class="container">
+                                <div class="row justify-content-center">
+                                    <div class="col-lg-8">
+                                        <?php if ($index === 0): ?>
+                                            <div class="header-badge mb-3">
+                                                <span class="badge bg-primary fs-6 px-3 py-2">
+                                                    <i class="fas fa-images me-2"></i>GALLERY
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <h1 id="gallery-main-heading" class="display-4 fw-bold mb-3">
+                                            <?php echo htmlspecialchars($slide['title']); ?>
+                                        </h1>
+
+                                        <?php if ($slide['subtitle']): ?>
+                                            <p class="lead mb-4">
+                                                <?php echo htmlspecialchars($slide['subtitle']); ?>
+                                            </p>
+                                        <?php endif; ?>
+
+                                        <?php if ($slide['button_text'] && $slide['button_link']): ?>
+                                            <a href="<?php echo htmlspecialchars($slide['button_link']); ?>"
+                                               class="btn btn-primary btn-lg me-3">
+                                                <?php echo htmlspecialchars($slide['button_text']); ?>
+                                                <i class="fas fa-arrow-right ms-2"></i>
+                                            </a>
+                                        <?php endif; ?>
+
+                                        <?php if ($index === 0): ?>
+                                            <div class="header-stats mt-4">
+                                                <div class="row g-3 justify-content-center">
+                                                    <div class="col-auto">
+                                                        <div class="stat-highlight text-white">
+                                                            <span class="fw-bold fs-4"><?php echo $totalImages; ?>+</span>
+                                                            <span>Images</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="stat-highlight text-white">
+                                                            <span class="fw-bold fs-4">HD</span>
+                                                            <span>Quality</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="stat-highlight text-white">
+                                                            <span class="fw-bold fs-4"><?php echo count($sliderImages); ?></span>
+                                                            <span>Slides</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+</section>
+<?php else: ?>
+<!-- Fallback Static Header -->
 <section class="premium-gallery-header bg-gradient-warning text-dark py-5 position-relative overflow-hidden"
          role="banner"
          aria-labelledby="gallery-main-heading">
@@ -65,35 +221,22 @@ $galleryStructuredData = [
     <div class="container position-relative">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <div class="header-content" data-aos="fade-right">
-                    <div class="header-badge mb-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="header-content">
+                    <div class="header-badge mb-3">
                         <span class="badge bg-dark fs-6 px-3 py-2" role="status">
                             <i class="fas fa-images me-2" aria-hidden="true"></i>GALLERY
                         </span>
                     </div>
-                    <h1 id="gallery-main-heading"
-                        class="display-5 fw-bold mb-3"
-                        data-aos="fade-up"
-                        data-aos-delay="200">Our Ambulance Fleet & Facilities</h1>
-                    <p class="lead"
-                       data-aos="fade-up"
-                       data-aos-delay="300">Take a look at our modern ambulances, advanced equipment, and professional team</p>
-                    <div class="header-stats mt-4"
-                         data-aos="fade-up"
-                         data-aos-delay="400"
-                         role="region"
-                         aria-label="Gallery statistics">
-                        <div class="row">
+                    <h1 id="gallery-main-heading" class="display-5 fw-bold mb-3">
+                        Our Ambulance Fleet & Facilities
+                    </h1>
+                    <p class="lead">Take a look at our modern ambulances, advanced equipment, and professional team</p>
+                    <div class="header-stats mt-4">
+                        <div class="row g-3">
                             <div class="col-auto">
                                 <div class="stat-highlight">
-                                    <span class="fw-bold fs-4 counter" data-target="<?php echo $hasCustomGallery ? count($galleryImages) : 12; ?>">0</span>
+                                    <span class="fw-bold fs-4"><?php echo $totalImages; ?>+</span>
                                     <span class="text-dark">Images</span>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <div class="stat-highlight">
-                                    <span class="fw-bold fs-4">4</span>
-                                    <span class="text-dark">Categories</span>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -107,21 +250,16 @@ $galleryStructuredData = [
                 </div>
             </div>
             <div class="col-lg-4 text-end">
-                <div class="header-visual" data-aos="fade-left" data-aos-delay="500">
+                <div class="header-visual">
                     <div class="gallery-icon-showcase" role="img" aria-label="Gallery showcase">
                         <i class="fas fa-images display-1" aria-hidden="true"></i>
-                        <div class="showcase-sparkles" aria-hidden="true">
-                            <div class="sparkle"></div>
-                            <div class="sparkle"></div>
-                            <div class="sparkle"></div>
-                            <div class="sparkle"></div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- Gallery Search -->
 <section class="gallery-search-section py-4 bg-light">
@@ -173,14 +311,13 @@ $galleryStructuredData = [
                         <div class="gallery-image-container">
                             <div class="gallery-image" style="height: 280px; overflow: hidden;">
                                 <?php
-                                $imageSrc = $image['thumbnail_path'] ?: $image['image_path'];
-                                $fullImageSrc = $image['image_path'];
+                                $imageSrc = $image['image'];
                                 $imageExists = file_exists($imageSrc);
                                 ?>
 
                                 <?php if ($imageExists): ?>
                                     <img src="<?php echo htmlspecialchars($imageSrc); ?>"
-                                         alt="<?php echo htmlspecialchars($image['alt_text'] ?: $image['title']); ?>"
+                                         alt="<?php echo htmlspecialchars($image['name']); ?>"
                                          class="w-100 h-100"
                                          style="object-fit: cover;"
                                          loading="lazy"
@@ -191,6 +328,7 @@ $galleryStructuredData = [
                                         <div class="text-center">
                                             <i class="fas fa-image text-muted fs-1 mb-2"></i>
                                             <p class="text-muted small">Image not found</p>
+                                            <small class="text-muted"><?php echo htmlspecialchars($imageSrc); ?></small>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -200,39 +338,34 @@ $galleryStructuredData = [
                                         <button class="btn btn-light btn-sm image-zoom"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#imageModal"
-                                                data-image="<?php echo htmlspecialchars($fullImageSrc); ?>"
-                                                data-title="<?php echo htmlspecialchars($image['title']); ?>"
-                                                data-description="<?php echo htmlspecialchars($image['description']); ?>"
+                                                data-image="<?php echo htmlspecialchars($imageSrc); ?>"
+                                                data-title="<?php echo htmlspecialchars($image['name']); ?>"
+                                                data-description="<?php echo htmlspecialchars($image['name']); ?>"
                                                 aria-label="View larger image">
                                             <i class="fas fa-expand" aria-hidden="true"></i>
                                         </button>
-                                        <?php if ($image['is_featured']): ?>
-                                            <div class="featured-badge">
-                                                <i class="fas fa-star text-warning"></i>
-                                            </div>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="gallery-info p-3">
+                        <div class="gallery-info p-3 d-none">
                             <h6 id="image-<?php echo $imageIndex; ?>" class="fw-bold text-primary mb-2">
-                                <?php echo htmlspecialchars($image['title']); ?>
+                                <?php echo htmlspecialchars($image['name']); ?>
                             </h6>
-                            <?php if ($image['description']): ?>
-                                <p class="text-muted small mb-2"><?php echo htmlspecialchars(substr($image['description'], 0, 100)) . (strlen($image['description']) > 100 ? '...' : ''); ?></p>
-                            <?php endif; ?>
                             <div class="gallery-meta mt-2">
-                                <span class="badge text-white"
-                                      style="background-color: <?php echo htmlspecialchars($image['category_color'] ?: '#007bff'); ?>">
-                                    <i class="<?php echo htmlspecialchars($image['category_icon'] ?: 'fas fa-image'); ?> me-1"></i>
-                                    <?php echo htmlspecialchars($image['category_name'] ?: ucfirst($image['category'])); ?>
+                                <span class="badge bg-primary text-white">
+                                    <i class="fas fa-image me-1"></i>
+                                    Gallery
                                 </span>
-                                <?php if ($image['is_featured']): ?>
-                                    <span class="badge bg-warning text-dark ms-1">
-                                        <i class="fas fa-star me-1"></i>Featured
-                                    </span>
-                                <?php endif; ?>
+                                <span class="badge bg-success text-white ms-1">
+                                    <i class="fas fa-check me-1"></i>Active
+                                </span>
+                            </div>
+                            <div class="gallery-date mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <?php echo date('M j, Y', strtotime($image['created_at'])); ?>
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -278,342 +411,7 @@ $galleryStructuredData = [
                     </div>
                 </div>
 
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="200"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="als-ambulance">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-danger">
-                                        <i class="fas fa-heartbeat text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">ALS Ambulance</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Ventilator</span>
-                                        <span class="feature-badge">Cardiac Monitor</span>
-                                        <span class="feature-badge">Defibrillator</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="als-ambulance" class="fw-bold text-danger mb-2">Advanced Life Support Ambulance</h6>
-                            <p class="text-muted small mb-2">Advanced medical equipment and trained personnel for critical emergency situations</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-primary">Ambulances</span>
-                                <span class="badge bg-warning text-dark">Critical Care</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="300"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="icu-ambulance">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-warning">
-                                        <i class="fas fa-hospital text-dark" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">ICU Ambulance</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Complete ICU</span>
-                                        <span class="feature-badge">Multi-Monitor</span>
-                                        <span class="feature-badge">Specialist Doctor</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="icu-ambulance" class="fw-bold text-warning mb-2">Mobile ICU Ambulance</h6>
-                            <p class="text-muted small mb-2">Complete ICU setup for critical patient transportation requiring intensive monitoring</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-primary">Ambulances</span>
-                                <span class="badge bg-danger">ICU Level Care</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Equipment Images -->
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="400"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="oxygen-system">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-info">
-                                        <i class="fas fa-lungs text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Oxygen Support</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">High Flow</span>
-                                        <span class="feature-badge">Portable</span>
-                                        <span class="feature-badge">Emergency Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="oxygen-system" class="fw-bold text-info mb-2">Oxygen Support System</h6>
-                            <p class="text-muted small mb-2">High-quality oxygen cylinders and delivery systems for patient respiratory support</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-info">Equipment</span>
-                                <span class="badge bg-success">Life Support</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="500"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="cardiac-monitor">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-danger">
-                                        <i class="fas fa-heartbeat text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Cardiac Monitor</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Real-time</span>
-                                        <span class="feature-badge">Multi-parameter</span>
-                                        <span class="feature-badge">Alert System</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="cardiac-monitor" class="fw-bold text-danger mb-2">Cardiac Monitoring Equipment</h6>
-                            <p class="text-muted small mb-2">Advanced cardiac monitors for continuous patient vital signs monitoring</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-info">Equipment</span>
-                                <span class="badge bg-danger">Critical Care</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="600"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="medical-kit">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-success">
-                                        <i class="fas fa-briefcase-medical text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Medical Kit</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Complete Kit</span>
-                                        <span class="feature-badge">Sterile</span>
-                                        <span class="feature-badge">Emergency Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="medical-kit" class="fw-bold text-success mb-2">Emergency Medical Kit</h6>
-                            <p class="text-muted small mb-2">Comprehensive first aid and emergency medical supplies for immediate care</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-info">Equipment</span>
-                                <span class="badge bg-warning text-dark">First Aid</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Team Images -->
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="100"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="paramedic-team">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-primary">
-                                        <i class="fas fa-user-md text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Paramedic Team</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Certified</span>
-                                        <span class="feature-badge">Experienced</span>
-                                        <span class="feature-badge">24x7 Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="paramedic-team" class="fw-bold text-primary mb-2">Professional Paramedics</h6>
-                            <p class="text-muted small mb-2">Trained and certified paramedics ready for emergency response and patient care</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-secondary">Team</span>
-                                <span class="badge bg-success">Certified</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="200"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="support-team">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-success">
-                                        <i class="fas fa-users text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Support Staff</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Compassionate</span>
-                                        <span class="feature-badge">Helpful</span>
-                                        <span class="feature-badge">Professional</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="support-team" class="fw-bold text-success mb-2">Support Team</h6>
-                            <p class="text-muted small mb-2">Compassionate support staff for patient care and family assistance during emergencies</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-secondary">Team</span>
-                                <span class="badge bg-info">Support</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="300"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="management-team">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-info">
-                                        <i class="fas fa-user-tie text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Management</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Experienced</span>
-                                        <span class="feature-badge">Leadership</span>
-                                        <span class="feature-badge">Quality Focus</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="management-team" class="fw-bold text-info mb-2">Management Team</h6>
-                            <p class="text-muted small mb-2">Experienced management ensuring quality service delivery and operational excellence</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-secondary">Team</span>
-                                <span class="badge bg-warning text-dark">Leadership</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Facilities Images -->
-                <div class="col-lg-4 col-md-6 gallery-item"
-                     data-aos="fade-up"
-                     data-aos-delay="400"
-                     role="gridcell">
-                    <div class="premium-gallery-card h-100"
-                         role="article"
-                         aria-labelledby="main-office">
-                        <div class="gallery-image-container">
-                            <div class="gallery-image bg-gradient-light d-flex align-items-center justify-content-center" style="height: 280px;">
-                                <div class="text-center icon-showcase">
-                                    <div class="icon-circle bg-primary">
-                                        <i class="fas fa-building text-white" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    </div>
-                                    <p class="mt-3 text-muted fw-semibold">Our Office</p>
-                                </div>
-                            </div>
-                            <div class="image-overlay">
-                                <div class="overlay-content">
-                                    <div class="service-features">
-                                        <span class="feature-badge">Central Location</span>
-                                        <span class="feature-badge">Modern</span>
-                                        <span class="feature-badge">Accessible</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gallery-info p-3">
-                            <h6 id="main-office" class="fw-bold text-primary mb-2">Main Office</h6>
-                            <p class="text-muted small mb-2">Our main office near Ramkrishna Care Hospital, centrally located for quick response</p>
-                            <div class="gallery-meta">
-                                <span class="badge bg-dark">Facilities</span>
-                                <span class="badge bg-primary">Headquarters</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+               
                 <div class="col-lg-4 col-md-6 gallery-item"
                      data-aos="fade-up"
                      data-aos-delay="500"
@@ -709,37 +507,12 @@ $galleryStructuredData = [
             </div>
             <div class="modal-body p-0">
                 <div class="row g-0">
-                    <div class="col-lg-8">
+                    <div class="col-lg-12">
                         <div class="image-container">
                             <img src="" alt="" class="w-100" id="modalImage" style="max-height: 70vh; object-fit: contain;">
                         </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="image-details p-4">
-                            <h6 class="fw-bold text-primary mb-3" id="modalImageTitle">Image Title</h6>
-                            <div class="image-info">
-                                <div class="info-item mb-3" id="modalImageDescription">
-                                    <label class="fw-semibold text-muted small">Description:</label>
-                                    <p class="mb-0" id="modalDescriptionText">No description available</p>
-                                </div>
-                                <div class="info-item mb-3" id="modalImageCategory">
-                                    <label class="fw-semibold text-muted small">Category:</label>
-                                    <div id="modalCategoryBadge"></div>
-                                </div>
-                                <div class="info-item mb-3">
-                                    <label class="fw-semibold text-muted small">Actions:</label>
-                                    <div class="d-flex gap-2 mt-2">
-                                        <button class="btn btn-outline-primary btn-sm" onclick="downloadImage()">
-                                            <i class="fas fa-download me-1"></i>Download
-                                        </button>
-                                        <button class="btn btn-outline-secondary btn-sm" onclick="shareImage()">
-                                            <i class="fas fa-share me-1"></i>Share
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                   
                 </div>
             </div>
             <div class="modal-footer border-0">

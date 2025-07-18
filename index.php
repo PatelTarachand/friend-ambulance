@@ -1,18 +1,27 @@
 <?php
 include 'includes/header.php';
 
-// Get slider images from database
+// Get hero background images from database
+$heroBackgrounds = [];
 try {
-    require_once 'admin/config/database.php';
-    $sliderImages = getMultipleRecords(
-        "SELECT * FROM slider_images WHERE is_active = 1 ORDER BY slide_order ASC, created_at DESC LIMIT 10"
-    );
+    require_once 'admin/includes/database.php';
+    $heroBgDb = new HeroBackgroundDB();
+    $heroBackgrounds = $heroBgDb->getAll();
 } catch (Exception $e) {
-    $sliderImages = [];
+    // Fallback to empty array if database fails
+    $heroBackgrounds = [];
+    error_log("Hero background database error: " . $e->getMessage());
 }
 
-// If no slider images in database, use default slides
-$hasCustomSliders = !empty($sliderImages);
+// Convert to associative array for easy access
+$bgImages = [];
+foreach ($heroBackgrounds as $bg) {
+    $bgImages[$bg['slide_number']] = $bg['background_image'];
+}
+
+// Since admin panel is removed, we'll use default slides
+$sliderImages = [];
+$hasCustomSliders = false;
 
 // Add structured data for better SEO
 $structuredData = [
@@ -49,6 +58,76 @@ $structuredData = [
 <script type="application/ld+json">
 <?php echo json_encode($structuredData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); ?>
 </script>
+
+<!-- Hero Background Styles -->
+<style>
+.hero-slide {
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+}
+
+.hero-bg-image,
+.hero-bg-overlay,
+.hero-bg-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-bg-image {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll;
+}
+
+.hero-bg-overlay {
+    /* Theme color overlay will be applied inline */
+}
+
+.hero-slide .container {
+    position: relative;
+    z-index: 100;
+}
+
+.hero-slide .row {
+    position: relative;
+    z-index: 100;
+}
+
+/* Ensure text is always visible with better contrast */
+.hero-slide h1,
+.hero-slide p,
+.hero-slide .btn,
+.hero-slide .badge {
+    position: relative;
+    z-index: 100;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero-slide .btn {
+    text-shadow: none;
+}
+
+/* Debug: Add border to see slide boundaries */
+.hero-slide {
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+    .hero-bg-image {
+        background-attachment: scroll;
+    }
+
+    .hero-slide h1 {
+        font-size: 2.5rem !important;
+    }
+}
+</style>
 
 <!-- Main Content -->
 <main id="main-content" role="main">
@@ -90,84 +169,7 @@ $structuredData = [
 
         <!-- Carousel Inner - Enhanced -->
         <div class="carousel-inner" role="tabpanel">
-            <?php if ($hasCustomSliders): ?>
-                <!-- Custom Slider Images from Database -->
-                <?php foreach ($sliderImages as $index => $slider): ?>
-                <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>"
-                     id="slide-<?php echo $index; ?>"
-                     role="tabpanel"
-                     aria-labelledby="slide-<?php echo $index; ?>-tab"
-                     data-aos="fade-in"
-                     data-aos-duration="1000">
-                    <div class="hero-slide d-flex align-items-center min-vh-100"
-                         style="background: linear-gradient(135deg, <?php echo htmlspecialchars($slider['background_color']); ?>, <?php echo htmlspecialchars($slider['background_color']); ?>dd); color: <?php echo htmlspecialchars($slider['text_color']); ?>;">
-                        <div class="hero-slide-bg"
-                             style="background-image: url('<?php echo htmlspecialchars($slider['image_path']); ?>'); opacity: 0.3;"
-                             role="img"
-                             aria-label="<?php echo htmlspecialchars($slider['title']); ?> background image"></div>
-                        <div class="container">
-                            <div class="row align-items-center">
-                                <div class="col-lg-6">
-                                    <div class="hero-content" data-aos="fade-right" data-aos-delay="200">
-                                        <h1 class="display-3 fw-bold mb-4"
-                                            data-aos="fade-up"
-                                            data-aos-delay="300"
-                                            role="heading"
-                                            aria-level="1">
-                                            <?php echo nl2br(htmlspecialchars($slider['title'])); ?>
-                                        </h1>
-                                        <?php if ($slider['description']): ?>
-                                            <p class="lead mb-4"
-                                               data-aos="fade-up"
-                                               data-aos-delay="400">
-                                                <?php echo nl2br(htmlspecialchars($slider['description'])); ?>
-                                            </p>
-                                        <?php endif; ?>
-                                        <div class="d-flex flex-wrap gap-3"
-                                             data-aos="fade-up"
-                                             data-aos-delay="500"
-                                             role="group"
-                                             aria-label="Emergency contact options">
-                                            <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>"
-                                               class="btn btn-warning btn-lg"
-                                               aria-label="Call emergency number <?php echo formatPhone(PHONE_PRIMARY); ?>">
-                                                <i class="fas fa-phone me-2" aria-hidden="true"></i>
-                                                CALL NOW: <?php echo formatPhone(PHONE_PRIMARY); ?>
-                                            </a>
-                                            <?php if ($slider['button_text'] && $slider['button_link']): ?>
-                                                <a href="<?php echo htmlspecialchars($slider['button_link']); ?>"
-                                                   class="btn btn-outline-light btn-lg"
-                                                   aria-label="<?php echo htmlspecialchars($slider['button_text']); ?>">
-                                                    <?php echo htmlspecialchars($slider['button_text']); ?>
-                                                </a>
-                                            <?php else: ?>
-                                                <a href="https://wa.me/<?php echo WHATSAPP; ?>"
-                                                   class="btn btn-success btn-lg"
-                                                   target="_blank"
-                                                   rel="noopener noreferrer"
-                                                   aria-label="Contact us on WhatsApp">
-                                                    <i class="fab fa-whatsapp me-2" aria-hidden="true"></i> WhatsApp
-                                                </a>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <div class="hero-image text-center" data-aos="fade-left" data-aos-delay="600">
-                                        <img data-src="<?php echo htmlspecialchars($slider['image_path']); ?>"
-                                             alt="<?php echo htmlspecialchars($slider['title']); ?>"
-                                             class="img-fluid rounded shadow-lg lazy"
-                                             loading="lazy"
-                                             width="600"
-                                             height="400">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            <?php else: ?>
+
                 <!-- Default Slides (Enhanced) -->
                 <!-- Slide 1 - Emergency Response -->
                 <div class="carousel-item active"
@@ -176,7 +178,16 @@ $structuredData = [
                      aria-labelledby="slide-0-tab"
                      data-aos="fade-in"
                      data-aos-duration="1000">
-                <div class="hero-slide bg-gradient-danger d-flex align-items-center min-vh-100">
+                <div class="hero-slide d-flex align-items-center min-vh-100 position-relative">
+                    <?php if (isset($bgImages[1]) && $bgImages[1]): ?>
+                        <div class="hero-bg-image"
+                             style="background-image: url('<?php echo htmlspecialchars($bgImages[1]); ?>'); z-index: 1;"></div>
+                        <div class="hero-bg-overlay"
+                             style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.8), rgba(220, 53, 69, 0.9)); z-index: 2;"></div>
+                    <?php else: ?>
+                        <div class="hero-bg-gradient"
+                             style="background: linear-gradient(135deg, #dc3545, #c82333); z-index: 1;"></div>
+                    <?php endif; ?>
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6">
@@ -242,7 +253,16 @@ $structuredData = [
 
             <!-- Slide 2 - 21+ Years Experience -->
             <div class="carousel-item">
-                <div class="hero-slide bg-gradient-primary d-flex align-items-center min-vh-100">
+                <div class="hero-slide d-flex align-items-center min-vh-100 position-relative">
+                    <?php if (isset($bgImages[2]) && $bgImages[2]): ?>
+                        <div class="hero-bg-image"
+                             style="background-image: url('<?php echo htmlspecialchars($bgImages[2]); ?>'); z-index: 1;"></div>
+                        <div class="hero-bg-overlay"
+                             style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.8), rgba(13, 110, 253, 0.9)); z-index: 2;"></div>
+                    <?php else: ?>
+                        <div class="hero-bg-gradient"
+                             style="background: linear-gradient(135deg, #0d6efd, #0b5ed7); z-index: 1;"></div>
+                    <?php endif; ?>
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6">
@@ -306,7 +326,16 @@ $structuredData = [
 
             <!-- Slide 3 - Advanced Equipment -->
             <div class="carousel-item">
-                <div class="hero-slide bg-gradient-success d-flex align-items-center min-vh-100">
+                <div class="hero-slide d-flex align-items-center min-vh-100 position-relative">
+                    <?php if (isset($bgImages[3]) && $bgImages[3]): ?>
+                        <div class="hero-bg-image"
+                             style="background-image: url('<?php echo htmlspecialchars($bgImages[3]); ?>'); z-index: 1;"></div>
+                        <div class="hero-bg-overlay"
+                             style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.8), rgba(25, 135, 84, 0.9)); z-index: 2;"></div>
+                    <?php else: ?>
+                        <div class="hero-bg-gradient"
+                             style="background: linear-gradient(135deg, #198754, #157347); z-index: 1;"></div>
+                    <?php endif; ?>
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6">
@@ -383,7 +412,16 @@ $structuredData = [
 
             <!-- Slide 4 - Contact & Booking -->
             <div class="carousel-item">
-                <div class="hero-slide bg-gradient-info d-flex align-items-center min-vh-100">
+                <div class="hero-slide d-flex align-items-center min-vh-100 position-relative">
+                    <?php if (isset($bgImages[4]) && $bgImages[4]): ?>
+                        <div class="hero-bg-image"
+                             style="background-image: url('<?php echo htmlspecialchars($bgImages[4]); ?>'); z-index: 1;"></div>
+                        <div class="hero-bg-overlay"
+                             style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.8), rgba(13, 202, 240, 0.9)); z-index: 2;"></div>
+                    <?php else: ?>
+                        <div class="hero-bg-gradient"
+                             style="background: linear-gradient(135deg, #0dcaf0, #31d2f2); z-index: 1;"></div>
+                    <?php endif; ?>
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6">
@@ -447,7 +485,6 @@ $structuredData = [
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
         </div>
 
         <!-- Carousel Controls - Enhanced Accessibility -->

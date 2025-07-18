@@ -1,268 +1,160 @@
 <?php
-require_once 'includes/header.php';
+// Get gallery and slider stats
+require_once 'includes/database.php';
+$db = new GalleryDB();
+$sliderDb = new SliderDB();
+$galleryStats = $db->getStats();
+$sliderStats = $sliderDb->getStats();
 
-// Get statistics
-$sliderCount = getSingleRecord("SELECT COUNT(*) as count FROM slider_images WHERE is_active = 1")['count'];
-$galleryCount = getSingleRecord("SELECT COUNT(*) as count FROM gallery_images WHERE is_active = 1")['count'];
-$totalSliders = getSingleRecord("SELECT COUNT(*) as count FROM slider_images")['count'];
-$totalGallery = getSingleRecord("SELECT COUNT(*) as count FROM gallery_images")['count'];
-
-// Get recent activity
-$recentSliders = getMultipleRecords(
-    "SELECT s.*, u.full_name as created_by_name 
-     FROM slider_images s 
-     LEFT JOIN admin_users u ON s.created_by = u.id 
-     ORDER BY s.created_at DESC LIMIT 5"
-);
-
-$recentGallery = getMultipleRecords(
-    "SELECT g.*, u.full_name as created_by_name 
-     FROM gallery_images g 
-     LEFT JOIN admin_users u ON g.created_by = u.id 
-     ORDER BY g.created_at DESC LIMIT 5"
-);
+$loginTime = $_SESSION['login_time'] ?? time();
+$sessionDuration = time() - $loginTime;
+// Include common admin header
+include 'includes/header.php';
 ?>
-
-<!-- Dashboard Stats -->
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-0"><?php echo $sliderCount; ?></h3>
-                    <p class="mb-0">Active Sliders</p>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Friends Ambulance</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
+</head>
+<body>
+    <div class="container-fluid">
+                <div class="main-content">
+                   
+                    <!-- Dashboard Content -->
+                    <div class="container-fluid p-4">
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h2>
+                                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                                    Dashboard Overview
+                                </h2>
+                                <p class="text-muted">Welcome to Friends Ambulance Service Admin Panel</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-primary">
+                                            <i class="fas fa-images"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h3 class="mb-0"><?php echo $galleryStats['total']; ?></h3>
+                                            <p class="text-muted mb-0">Gallery Items</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-success">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h3 class="mb-0"><?php echo gmdate("H:i:s", $sessionDuration); ?></h3>
+                                            <p class="text-muted mb-0">Session Time</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-warning">
+                                            <i class="fas fa-calendar"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h3 class="mb-0"><?php echo date('d'); ?></h3>
+                                            <p class="text-muted mb-0"><?php echo date('M Y'); ?></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-info">
+                                            <i class="fas fa-sliders-h"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h3 class="mb-0"><?php echo $sliderStats['total']; ?></h3>
+                                            <p class="text-muted mb-0">Slider Items</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <a href="gallery.php" class="btn btn-primary">
+                                                <i class="fas fa-images me-2"></i>
+                                                Manage Gallery
+                                            </a>
+                                            <a href="slider.php" class="btn btn-success">
+                                                <i class="fas fa-sliders-h me-2"></i>
+                                                Manage Slider
+                                            </a>
+                                            <a href="hero-backgrounds.php" class="btn btn-warning">
+                                                <i class="fas fa-image me-2"></i>
+                                                Hero Backgrounds
+                                            </a>
+                                            <a href="site-settings.php" class="btn btn-info">
+                                                <i class="fas fa-cog me-2"></i>
+                                                Site Settings
+                                            </a>
+                                            <a href="../index.php" target="_blank" class="btn btn-outline-info">
+                                                <i class="fas fa-home me-2"></i>
+                                                View Home Page
+                                            </a>
+                                            <a href="../" target="_blank" class="btn btn-outline-secondary">
+                                                <i class="fas fa-home me-2"></i>
+                                                View Website
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="fas fa-info-circle me-2"></i>System Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li><strong>Login Time:</strong> <?php echo date('M j, Y g:i A', $loginTime); ?></li>
+                                            <li><strong>PHP Version:</strong> <?php echo PHP_VERSION; ?></li>
+                                            <li><strong>Server:</strong> <?php echo $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'; ?></li>
+                                            <li><strong>Upload Dir:</strong> <?php
+                                                $uploadDir = __DIR__ . '/../uploads/';
+                                                echo is_writable($uploadDir) ? 'Writable' : 'Not Writable';
+                                            ?></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="fs-1 opacity-75">
-                    <i class="fas fa-images"></i>
-                </div>
-            </div>
-        </div>
     </div>
     
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card success">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-0"><?php echo $galleryCount; ?></h3>
-                    <p class="mb-0">Gallery Images</p>
-                </div>
-                <div class="fs-1 opacity-75">
-                    <i class="fas fa-photo-video"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card warning">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-0"><?php echo $totalSliders; ?></h3>
-                    <p class="mb-0">Total Sliders</p>
-                </div>
-                <div class="fs-1 opacity-75">
-                    <i class="fas fa-layer-group"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card info">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-0"><?php echo $totalGallery; ?></h3>
-                    <p class="mb-0">Total Gallery</p>
-                </div>
-                <div class="fs-1 opacity-75">
-                    <i class="fas fa-images"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="slider-management.php?action=add" class="btn btn-primary w-100">
-                            <i class="fas fa-plus me-2"></i>Add Slider Image
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="gallery-management.php?action=add" class="btn btn-success w-100">
-                            <i class="fas fa-plus me-2"></i>Add Gallery Image
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="slider-management.php" class="btn btn-info w-100">
-                            <i class="fas fa-edit me-2"></i>Manage Sliders
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="gallery-management.php" class="btn btn-warning w-100">
-                            <i class="fas fa-edit me-2"></i>Manage Gallery
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-images me-2"></i>Recent Slider Images</h5>
-            </div>
-            <div class="card-body">
-                <?php if (empty($recentSliders)): ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-images fs-1 text-muted mb-3"></i>
-                        <p class="text-muted">No slider images yet</p>
-                        <a href="slider-management.php?action=add" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Add First Slider
-                        </a>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Title</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentSliders as $slider): ?>
-                                <tr>
-                                    <td>
-                                        <img src="../<?php echo htmlspecialchars($slider['image_path']); ?>" 
-                                             alt="Slider" class="rounded" style="width: 50px; height: 30px; object-fit: cover;">
-                                    </td>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($slider['title']); ?></strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?php echo $slider['is_active'] ? 'bg-success' : 'bg-secondary'; ?>">
-                                            <?php echo $slider['is_active'] ? 'Active' : 'Inactive'; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            <?php echo date('M j, Y', strtotime($slider['created_at'])); ?>
-                                        </small>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-center">
-                        <a href="slider-management.php" class="btn btn-outline-primary">
-                            View All Sliders <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-photo-video me-2"></i>Recent Gallery Images</h5>
-            </div>
-            <div class="card-body">
-                <?php if (empty($recentGallery)): ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-photo-video fs-1 text-muted mb-3"></i>
-                        <p class="text-muted">No gallery images yet</p>
-                        <a href="gallery-management.php?action=add" class="btn btn-success">
-                            <i class="fas fa-plus me-2"></i>Add First Image
-                        </a>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentGallery as $gallery): ?>
-                                <tr>
-                                    <td>
-                                        <img src="../<?php echo htmlspecialchars($gallery['image_path']); ?>" 
-                                             alt="Gallery" class="rounded" style="width: 50px; height: 30px; object-fit: cover;">
-                                    </td>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($gallery['title']); ?></strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">
-                                            <?php echo ucfirst($gallery['category']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?php echo $gallery['is_active'] ? 'bg-success' : 'bg-secondary'; ?>">
-                                            <?php echo $gallery['is_active'] ? 'Active' : 'Inactive'; ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-center">
-                        <a href="gallery-management.php" class="btn btn-outline-success">
-                            View All Gallery <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- System Info -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>System Information</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Last Login:</strong> <?php echo $currentUser['last_login'] ? date('M j, Y g:i A', strtotime($currentUser['last_login'])) : 'Never'; ?></p>
-                        <p><strong>User Role:</strong> <?php echo ucfirst($currentUser['role']); ?></p>
-                        <p><strong>PHP Version:</strong> <?php echo PHP_VERSION; ?></p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Server Time:</strong> <?php echo date('M j, Y g:i A'); ?></p>
-                        <p><strong>Upload Max Size:</strong> <?php echo ini_get('upload_max_filesize'); ?></p>
-                        <p><strong>Memory Limit:</strong> <?php echo ini_get('memory_limit'); ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php require_once 'includes/footer.php'; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 // Site Information
 define('SITE_NAME', 'Friends Ambulance Service');
 define('SITE_TAGLINE', 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
-define('SITE_URL', 'http://localhost/protc/Friend%20Ambulance');
+define('SITE_URL', 'http://localhost/protc/Friend');
 
 // Contact Information
 define('PHONE_PRIMARY', '93299 62163');
