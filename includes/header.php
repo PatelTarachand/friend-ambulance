@@ -59,6 +59,8 @@ if (!$configLoaded) {
 
 $current_page = getCurrentPage();
 
+// Google Maps Embed
+define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.4429078742346!2d81.65156137610691!3d21.214278480481905!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28dd46decc38c5%3A0xf572bf456c2ba098!2sRaipur%20Friends%20ambulance%20Service!5e0!3m2!1sen!2sin!4v1752684039523!5m2!1sen!2sin');
 
 ?>
 <!DOCTYPE html>
@@ -66,37 +68,37 @@ $current_page = getCurrentPage();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $current_page === 'home' ? SITE_NAME . ' - ' . SITE_TAGLINE : ucfirst(str_replace('-', ' ', $current_page)) . ' - ' . SITE_NAME; ?></title>
+    <title><?php echo $current_page === 'home' ? $SITE_SETTINGS['SITE_NAME'] . ' - ' . $SITE_SETTINGS['SITE_TAGLINE'] : ucfirst(str_replace('-', ' ', $current_page)) . ' - ' . $SITE_SETTINGS['SITE_NAME']; ?></title>
     
     <!-- Meta Tags -->
     <meta name="description" content="<?php echo META_DESCRIPTION; ?>">
     <meta name="keywords" content="<?php echo META_KEYWORDS; ?>">
-    <meta name="author" content="<?php echo SITE_NAME; ?>">
+    <meta name="author" content="<?php echo $SITE_SETTINGS['SITE_NAME']; ?>">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="<?php echo SITE_NAME; ?>">
+    <meta property="og:title" content="<?php echo $SITE_SETTINGS['SITE_NAME']; ?>">
     <meta property="og:description" content="<?php echo META_DESCRIPTION; ?>">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?php echo SITE_URL; ?>">
-    <meta property="og:image" content="<?php echo SITE_URL; ?>/assets/images/og-image.jpg">
+    <meta property="og:url" content="<?php echo $SITE_SETTINGS['SITE_URL']; ?>">
+    <meta property="og:image" content="<?php echo $SITE_SETTINGS['SITE_URL']; ?>/assets/images/og-image.jpg">
     <meta property="og:locale" content="en_IN">
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="<?php echo SITE_NAME; ?>">
+    <meta name="twitter:title" content="<?php echo $SITE_SETTINGS['SITE_NAME']; ?>">
     <meta name="twitter:description" content="<?php echo META_DESCRIPTION; ?>">
-    <meta name="twitter:image" content="<?php echo SITE_URL; ?>/assets/images/og-image.jpg">
+    <meta name="twitter:image" content="<?php echo $SITE_SETTINGS['SITE_URL']; ?>/assets/images/og-image.jpg">
 
     <!-- Local Business Schema -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "<?php echo SITE_NAME; ?>",
+        "name": "<?php echo $SITE_SETTINGS['SITE_NAME']; ?>",
         "description": "<?php echo META_DESCRIPTION; ?>",
-        "url": "<?php echo SITE_URL; ?>",
-        "telephone": "<?php echo PHONE_PRIMARY; ?>",
+        "url": "<?php echo $SITE_SETTINGS['SITE_URL']; ?>",
+        "telephone": "<?php echo $SITE_SETTINGS['PHONE_PRIMARY']; ?>",
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "<?php echo ADDRESS; ?>",
@@ -153,7 +155,7 @@ $current_page = getCurrentPage();
         },
         "contactPoint": {
             "@type": "ContactPoint",
-            "telephone": "<?php echo PHONE_PRIMARY; ?>",
+            "telephone": "<?php echo $SITE_SETTINGS['PHONE_PRIMARY']; ?>",
             "contactType": "emergency",
             "availableLanguage": ["English", "Hindi"],
             "hoursAvailable": "Mo-Su 00:00-23:59"
@@ -197,7 +199,7 @@ $current_page = getCurrentPage();
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="<?php echo SITE_NAME; ?>">
+    <meta name="apple-mobile-web-app-title" content="<?php echo $SITE_SETTINGS['SITE_NAME']; ?>">
     <link rel="apple-touch-icon" href="assets/images/icons/icon-192x192.png">
     
     <!-- Favicon -->
@@ -214,8 +216,8 @@ $current_page = getCurrentPage();
                         <span class="fw-bold">EMERGENCY? CALL NOW!</span>
                         <span class="ms-3">
                             <i class="fas fa-phone me-1"></i>
-                            <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="text-white text-decoration-none fw-bold">
-                                <?php echo formatPhone(PHONE_PRIMARY); ?>
+                            <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="text-white text-decoration-none fw-bold">
+                                <?php echo formatPhone($SITE_SETTINGS['PHONE_PRIMARY']); ?>
                             </a>
                         </span>
                     </div>
@@ -230,11 +232,11 @@ $current_page = getCurrentPage();
     <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="<?php echo SITE_URL; ?>">
+            <a class="navbar-brand d-flex align-items-center" href="<?php echo $SITE_SETTINGS['SITE_URL']; ?>">
                 <i class="fas fa-plus-circle text-danger me-2 fs-2"></i>
                 <div>
-                    <div class="fw-bold text-primary fs-4"><?php echo SITE_NAME; ?></div>
-                    <small class="text-muted">21+ Years of Trust</small>
+                    <div class="fw-bold text-primary fs-4"><?php echo $SITE_SETTINGS['SITE_NAME']; ?></div>
+                    <small class="text-muted"><?php  echo $SITE_SETTINGS['SITE_TAGLINE']; ?></small>
                 </div>
             </a>
             
@@ -265,7 +267,7 @@ $current_page = getCurrentPage();
                 </ul>
                 
                 <div class="d-flex gap-2">
-                    <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="btn btn-danger btn-sm">
+                    <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="btn btn-danger btn-sm">
                         <i class="fas fa-phone me-1"></i> Call Now
                     </a>
                     <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="btn btn-success btn-sm" target="_blank">

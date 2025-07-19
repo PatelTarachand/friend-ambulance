@@ -1,27 +1,108 @@
 <?php
-include 'includes/header.php';
+// Process contact form submission
+$message = '';
+$success = false;
 
-// Handle form submission
-$message_sent = false;
-$error_message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        // Debug: Show that form was submitted
+        error_log("Contact form submitted with data: " . print_r($_POST, true));
 
-if ($_POST) {
-    $name = htmlspecialchars(trim($_POST['name'] ?? ''));
-    $phone = htmlspecialchars(trim($_POST['phone'] ?? ''));
-    $email = htmlspecialchars(trim($_POST['email'] ?? ''));
-    $service = htmlspecialchars(trim($_POST['service'] ?? ''));
-    $message = htmlspecialchars(trim($_POST['message'] ?? ''));
+        // Get form data
+        $name = trim($_POST['name'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $subject = trim($_POST['subject'] ?? '');
+        $msg = trim($_POST['message'] ?? '');
 
-    // Basic validation
-    if (empty($name) || empty($phone) || empty($message)) {
-        $error_message = 'Please fill in all required fields.';
-    } elseif (!preg_match('/^[0-9]{10}$/', preg_replace('/[^0-9]/', '', $phone))) {
-        $error_message = 'Please enter a valid 10-digit phone number.';
-    } else {
-        // In a real application, you would send email or save to database
-        // For now, we'll just show a success message
-        $message_sent = true;
+        // Debug: Show processed data
+        error_log("Processed data - Name: $name, Email: $email, Message: $msg");
+
+        // Basic validation
+        if (empty($name) || empty($email) || empty($msg)) {
+            throw new Exception('Name, email, and message are required.');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Please enter a valid email address.');
+        }
+
+        // Use existing database classes
+        require_once 'admin/includes/database.php';
+
+        // Prepare form data
+        $formData = [
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'subject' => $subject,
+            'message' => $msg
+        ];
+
+        // Save to database using existing ContactFormDB class
+        $contactDB = new ContactFormDB();
+        $submissionId = $contactDB->submitForm($formData);
+
+        if ($submissionId) {
+            $success = true;
+            $message = "Thank you! Your message has been sent successfully. Submission ID: $submissionId";
+            // Clear form data
+            $_POST = [];
+        } else {
+            throw new Exception('Failed to save message');
+        }
+
+    } catch (Exception $e) {
+        $message = 'Error: ' . $e->getMessage();
     }
+}
+
+// Error handling for contact page
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // Show errors for debugging
+
+
+
+
+// Try to include header, but handle errors gracefully
+try {
+    include 'includes/header.php';
+} catch (Exception $e) {
+    // Fallback constants if header fails
+    if (!defined('SITE_NAME')) define('SITE_NAME', 'Friends Ambulance Service');
+    if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
+    if (!defined('PHONE_PRIMARY')) define('PHONE_PRIMARY', '9329962163');
+    if (!defined('PHONE_SECONDARY')) define('PHONE_SECONDARY', '8845987877');
+    if (!defined('PHONE_TERTIARY')) define('PHONE_TERTIARY', '7000562163');
+    if (!defined('EMAIL')) define('EMAIL', 'info@friendsambulance.com');
+    if (!defined('ADDRESS')) define('ADDRESS', 'Near Gurudwara, Shankar Nagar, Raipur, Chhattisgarh 492007');
+    if (!defined('WHATSAPP')) define('WHATSAPP', '919329962163');
+
+    // Simple header fallback
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Contact - <?php echo SITE_NAME; ?></title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand text-danger fw-bold" href="index.php">
+                    <i class="fas fa-ambulance me-2"></i><?php echo SITE_NAME; ?>
+                </a>
+                <div class="ms-auto">
+                    <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="btn btn-danger">
+                        <i class="fas fa-phone me-1"></i> Call Now
+                    </a>
+                </div>
+            </div>
+        </nav>
+    <?php
 }
 
 // Add structured data for better SEO
@@ -32,14 +113,14 @@ $contactStructuredData = [
         "@type" => "MedicalBusiness",
         "name" => SITE_NAME,
         "description" => "Contact Friends Ambulance Service for emergency and non-emergency medical transportation",
-        "url" => SITE_URL . "/contact",
+        "url" => (defined('SITE_URL') ? SITE_URL : 'http://localhost/protc/Friend') . "/contact.php",
         "telephone" => PHONE_PRIMARY,
         "email" => EMAIL,
         "address" => [
             "@type" => "PostalAddress",
             "streetAddress" => ADDRESS,
-            "addressLocality" => "Raipur",
-            "addressRegion" => "Chhattisgarh",
+            "addressLocality" => defined('CITY') ? CITY : "Raipur",
+            "addressRegion" => defined('STATE') ? STATE : "Chhattisgarh",
             "addressCountry" => "IN"
         ],
         "openingHours" => "Mo-Su 00:00-23:59",
@@ -56,11 +137,162 @@ $contactStructuredData = [
 <?php echo json_encode($contactStructuredData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); ?>
 </script>
 
+<!-- Contact Page Styles -->
+<style>
+.premium-contact-header {
+    min-height: 400px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.contact-background-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="20" cy="80" r="1" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.premium-contact-card {
+    background: #fff;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.premium-contact-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.contact-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.contact-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.contact-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.premium-contact-form {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.premium-form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.premium-form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.premium-submit-btn {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.premium-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,123,255,0.3);
+}
+
+.stat-highlight {
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.emergency-blink {
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
+.contact-waves {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.wave {
+    position: absolute;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    animation: wave 2s infinite;
+}
+
+.wave:nth-child(1) { width: 100px; height: 100px; animation-delay: 0s; }
+.wave:nth-child(2) { width: 150px; height: 150px; animation-delay: 0.5s; }
+.wave:nth-child(3) { width: 200px; height: 200px; animation-delay: 1s; }
+
+@keyframes wave {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+.contact-icon-showcase {
+    position: relative;
+    display: inline-block;
+}
+
+.premium-map-container {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.map-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,123,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+</style>
+
 <!-- Main Content -->
 <main id="main-content" role="main">
 
 <!-- Enhanced Page Header -->
-<section class="premium-contact-header bg-gradient-info text-white py-5 position-relative overflow-hidden"
+<section class="premium-contact-header bg-primary text-white py-5 position-relative overflow-hidden"
          role="banner"
          aria-labelledby="contact-main-heading">
     <div class="contact-background-pattern" aria-hidden="true"></div>
@@ -125,7 +357,7 @@ $contactStructuredData = [
 </section>
 
 <!-- Enhanced Emergency Contact -->
-<section class="premium-emergency-contact bg-gradient-danger text-white py-4"
+<section class="premium-emergency-contact bg-danger text-white py-4"
          role="region"
          aria-labelledby="emergency-heading">
     <div class="container">
@@ -391,31 +623,17 @@ $contactStructuredData = [
                      role="form"
                      aria-labelledby="contact-form-heading">
 
-                    <?php if ($message_sent): ?>
-                        <div class="alert alert-success alert-dismissible fade show"
-                             role="alert"
-                             data-aos="fade-down">
-                            <div class="alert-content">
-                                <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
-                                <strong>Success!</strong> Thank you for your message! We will contact you soon.
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <!-- Contact Form Alert Container -->
+                    <?php if ($message): ?>
+                        <div class="alert alert-<?php echo $success ? 'success' : 'danger'; ?> alert-dismissible fade show mb-4">
+                            <?php echo htmlspecialchars($message); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
 
-                    <?php if ($error_message): ?>
-                        <div class="alert alert-danger alert-dismissible fade show"
-                             role="alert"
-                             data-aos="fade-down">
-                            <div class="alert-content">
-                                <i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
-                                <strong>Error!</strong> <?php echo $error_message; ?>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    <?php endif; ?>
-                    
                     <form method="POST" action="" class="premium-contact-form-inner" data-aos="fade-up" data-aos-delay="500">
+                        <!-- Honeypot field for spam protection -->
+                        <input type="text" name="website" style="display: none;" tabindex="-1" autocomplete="off">
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <div class="form-group" data-aos="fade-right" data-aos-delay="600">
@@ -426,11 +644,12 @@ $contactStructuredData = [
                                            class="form-control premium-form-control"
                                            id="name"
                                            name="name"
-                                           value="<?php echo $_POST['name'] ?? ''; ?>"
+                                           value="<?php echo htmlspecialchars(($_POST['name'] ?? '') ?: ''); ?>"
                                            placeholder="Enter your full name"
                                            required
                                            aria-describedby="name-help">
                                     <div id="name-help" class="form-text">We'll use this to address you properly</div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -442,12 +661,11 @@ $contactStructuredData = [
                                            class="form-control premium-form-control"
                                            id="phone"
                                            name="phone"
-                                           value="<?php echo $_POST['phone'] ?? ''; ?>"
-                                           placeholder="Enter 10-digit mobile number"
-                                           pattern="[0-9]{10}"
-                                           required
+                                           value="<?php echo htmlspecialchars(($_POST['phone'] ?? '') ?: ''); ?>"
+                                           placeholder="Enter your phone number"
                                            aria-describedby="phone-help">
-                                    <div id="phone-help" class="form-text">We'll call you back on this number</div>
+                                    <div id="phone-help" class="form-text">Optional - for urgent follow-up</div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -459,39 +677,34 @@ $contactStructuredData = [
                                            class="form-control premium-form-control"
                                            id="email"
                                            name="email"
-                                           value="<?php echo $_POST['email'] ?? ''; ?>"
+                                           value="<?php echo htmlspecialchars(($_POST['email'] ?? '') ?: ''); ?>"
                                            placeholder="Enter your email address"
+                                           required
                                            aria-describedby="email-help">
-                                    <div id="email-help" class="form-text">Optional - for email updates</div>
+                                    <div id="email-help" class="form-text">We'll send you a confirmation</div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group" data-aos="fade-left" data-aos-delay="700">
-                                    <label for="service" class="form-label">
-                                        <i class="fas fa-ambulance text-warning me-2" aria-hidden="true"></i>Service Required
+                                    <label for="subject" class="form-label">
+                                        <i class="fas fa-ambulance text-primary me-2" aria-hidden="true"></i>Subject
                                     </label>
                                     <select class="form-select premium-form-control"
-                                            id="service"
-                                            name="service"
-                                            aria-describedby="service-help">
-                                        <option value="">Select Service Type</option>
-                                        <option value="BLS Ambulance" <?php echo ($_POST['service'] ?? '') === 'BLS Ambulance' ? 'selected' : ''; ?>>
-                                            BLS Ambulance - Basic Life Support
-                                        </option>
-                                        <option value="ALS Ambulance" <?php echo ($_POST['service'] ?? '') === 'ALS Ambulance' ? 'selected' : ''; ?>>
-                                            ALS Ambulance - Advanced Life Support
-                                        </option>
-                                        <option value="ICU Ambulance" <?php echo ($_POST['service'] ?? '') === 'ICU Ambulance' ? 'selected' : ''; ?>>
-                                            ICU Ambulance - Mobile ICU
-                                        </option>
-                                        <option value="Patient Transport" <?php echo ($_POST['service'] ?? '') === 'Patient Transport' ? 'selected' : ''; ?>>
-                                            Patient Transport - Non-Emergency
-                                        </option>
-                                        <option value="General Inquiry" <?php echo ($_POST['service'] ?? '') === 'General Inquiry' ? 'selected' : ''; ?>>
-                                            General Inquiry - Information
-                                        </option>
+                                            id="subject"
+                                            name="subject"
+                                            aria-describedby="subject-help">
+                                        <option value="">Select inquiry type</option>
+                                        <option value="Emergency Ambulance" <?php echo (($_POST['subject'] ?? '') === 'Emergency Ambulance') ? 'selected' : ''; ?>>Emergency Ambulance</option>
+                                        <option value="BLS Ambulance" <?php echo (($_POST['subject'] ?? '') === 'BLS Ambulance') ? 'selected' : ''; ?>>BLS Ambulance</option>
+                                        <option value="ALS Ambulance" <?php echo (($_POST['subject'] ?? '') === 'ALS Ambulance') ? 'selected' : ''; ?>>ALS Ambulance</option>
+                                        <option value="Patient Transport" <?php echo (($_POST['subject'] ?? '') === 'Patient Transport') ? 'selected' : ''; ?>>Patient Transport</option>
+                                        <option value="Event Standby" <?php echo (($_POST['subject'] ?? '') === 'Event Standby') ? 'selected' : ''; ?>>Event Standby</option>
+                                        <option value="General Inquiry" <?php echo (($_POST['subject'] ?? '') === 'General Inquiry') ? 'selected' : ''; ?>>General Inquiry</option>
+                                        <option value="Other" <?php echo (($_POST['subject'] ?? '') === 'Other') ? 'selected' : ''; ?>>Other</option>
                                     </select>
-                                    <div id="service-help" class="form-text">Choose the service you need</div>
+                                    <div id="subject-help" class="form-text">Help us route your inquiry</div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -503,26 +716,21 @@ $contactStructuredData = [
                                               id="message"
                                               name="message"
                                               rows="5"
-                                              placeholder="Please describe your requirements, location, and any specific needs..."
+                                              placeholder="Please provide details about your requirement, location, urgency level, and any special medical needs..."
                                               required
-                                              aria-describedby="message-help"><?php echo $_POST['message'] ?? ''; ?></textarea>
-                                    <div id="message-help" class="form-text">Provide details about your requirements</div>
+                                              aria-describedby="message-help"><?php echo htmlspecialchars(($_POST['message'] ?? '') ?: ''); ?></textarea>
+                                    <div id="message-help" class="form-text">Include pickup location, destination, patient condition, and urgency</div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                             <div class="col-12">
-                                <div class="form-submit" data-aos="fade-up" data-aos-delay="900">
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary btn-lg premium-submit-btn">
-                                            <i class="fas fa-paper-plane me-2" aria-hidden="true"></i>Send Message
-                                            <span class="btn-loading d-none">
-                                                <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>Sending...
-                                            </span>
-                                        </button>
-                                    </div>
-                                    <div class="form-note mt-3 text-center">
+                                <div class="form-group text-center" data-aos="fade-up" data-aos-delay="900">
+                                    <input type="submit" class="btn btn-primary btn-lg premium-submit-btn" value="Send Message" name="submit" />
+                                        
+                                    <div class="mt-3">
                                         <small class="text-muted">
-                                            <i class="fas fa-shield-alt text-success me-1" aria-hidden="true"></i>
-                                            Your information is secure and will not be shared with third parties
+                                            <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>
+                                            Your information is secure and will only be used to contact you about your ambulance service request.
                                         </small>
                                     </div>
                                 </div>
@@ -695,29 +903,8 @@ $contactStructuredData = [
 
 <!-- Contact Page JavaScript -->
 <script>
+// Simple form enhancement
 document.addEventListener('DOMContentLoaded', function() {
-    // Form Enhancement
-    const form = document.querySelector('.premium-contact-form-inner');
-    const submitBtn = document.querySelector('.premium-submit-btn');
-    const btnText = submitBtn.querySelector('span:not(.btn-loading)');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-
-    if (form && submitBtn) {
-        form.addEventListener('submit', function(e) {
-            // Show loading state
-            btnText.classList.add('d-none');
-            btnLoading.classList.remove('d-none');
-            submitBtn.disabled = true;
-
-            // Re-enable after a delay (for demo purposes)
-            setTimeout(() => {
-                btnText.classList.remove('d-none');
-                btnLoading.classList.add('d-none');
-                submitBtn.disabled = false;
-            }, 2000);
-        });
-    }
-
     // Phone number formatting
     const phoneInput = document.getElementById('phone');
     if (phoneInput) {
@@ -729,35 +916,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.value = value;
         });
     }
-
-    // Form validation feedback
-    const formInputs = document.querySelectorAll('.premium-form-control');
-    formInputs.forEach(input => {
-        input.addEventListener('blur', function() {
-            if (this.checkValidity()) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            } else {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-            }
-        });
-    });
-
-    // Map overlay toggle
-    const mapContainer = document.querySelector('.premium-map-container');
-    const mapOverlay = document.querySelector('.map-overlay');
-
-    if (mapContainer && mapOverlay) {
-        mapContainer.addEventListener('mouseenter', function() {
-            mapOverlay.style.opacity = '1';
-        });
-
-        mapContainer.addEventListener('mouseleave', function() {
-            mapOverlay.style.opacity = '0';
-        });
-    }
 });
 </script>
+
 
 <?php include 'includes/footer.php'; ?>

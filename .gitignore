@@ -1,0 +1,143 @@
+# PHP Project .gitignore
+
+# Composer dependencies
+/vendor/
+composer.phar
+composer.lock
+
+# Environment and configuration files
+.env
+.env.local
+.env.production
+.env.staging
+config.php
+database.php
+wp-config.php
+
+# Log files
+*.log
+logs/
+error.log
+access.log
+debug.log
+php_errors.log
+
+# Cache and temporary files
+cache/
+tmp/
+temp/
+*.tmp
+*.cache
+.cache/
+
+# Upload directories and user content
+uploads/
+assets/uploads/
+admin/uploads/
+files/
+media/
+images/user/
+gallery/uploads/
+
+# Database files
+*.sql
+*.sqlite
+*.db
+database/
+backups/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Node.js (if using for build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build and distribution files
+dist/
+build/
+public/build/
+assets/build/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Security and sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+.htpasswd
+auth.json
+
+# Backup files
+*.bak
+*.backup
+*.old
+*~
+
+# Test files
+phpunit.xml
+.phpunit.result.cache
+tests/_output/
+codeception.yml
+
+# Framework specific
+# Laravel
+/bootstrap/compiled.php
+/app/storage/
+/storage/
+/public/storage
+
+# CodeIgniter
+/application/logs/
+/application/cache/
+
+# Symfony
+/var/
+/web/bundles/
+
+# WordPress (if applicable)
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+
+# Custom project specific
+# Add your specific files/folders here
+admin/test-*.php
+admin/debug-*.php
+admin/simple-*.php
+admin/direct-*.php
+check-*.php
+test-*.php
+debug-*.php
+
+# Documentation that might contain sensitive info
+INSTALL.md
+SETUP.md
+DEPLOYMENT.md
+
+# Miscellaneous
+*.zip
+*.tar.gz
+*.rar
+*.7z

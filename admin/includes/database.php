@@ -643,4 +643,171 @@ class SiteSettingsDB {
         }
     }
 }
+
+// Contact Form Database Class
+class ContactFormDB {
+    private $connection;
+
+    public function __construct() {
+        $this->initDatabase();
+    }
+
+    // Initialize database connection
+    private function initDatabase() {
+        try {
+            // Get connection from config
+            $this->connection = getDBConnection();
+            $this->createTable();
+        } catch (Exception $e) {
+            die("Contact form database initialization failed: " . $e->getMessage());
+        }
+    }
+
+    private function createTable() {
+        $sql = "CREATE TABLE IF NOT EXISTS contact_submissions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(20),
+            subject VARCHAR(255),
+            message TEXT NOT NULL,
+            status ENUM('new', 'read', 'replied', 'archived') DEFAULT 'new',
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_status (status),
+            INDEX idx_submitted_at (submitted_at),
+            INDEX idx_email (email)
+        )";
+
+        if (!$this->connection->query($sql)) {
+            throw new Exception("Error creating contact_submissions table: " . $this->connection->error);
+        }
+    }
+
+    public function submitForm($data) {
+        $sql = "INSERT INTO contact_submissions (name, email, phone, subject, message, ip_address, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->connection->prepare($sql);
+
+        // Prepare variables for bind_param (must be variables, not expressions)
+        $name = $data['name'];
+        $email = $data['email'];
+        $phone = $data['phone'] ?? null;
+        $subject = $data['subject'] ?? null;
+        $message = $data['message'];
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+        $stmt->bind_param("sssssss",
+            $name,
+            $email,
+            $phone,
+            $subject,
+            $message,
+            $ip_address,
+            $user_agent
+        );
+
+        if ($stmt->execute()) {
+            return $this->connection->insert_id;
+        }
+        return false;
+    }
+
+    public function getAllSubmissions($status = null, $limit = 50, $offset = 0) {
+        $sql = "SELECT * FROM contact_submissions";
+        $params = [];
+        $types = "";
+
+        if ($status) {
+            $sql .= " WHERE status = ?";
+            $params[] = $status;
+            $types .= "s";
+        }
+
+        $sql .= " ORDER BY submitted_at DESC LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+
+        $stmt = $this->connection->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getSubmissionById($id) {
+        $sql = "SELECT * FROM contact_submissions WHERE id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        }
+        return null;
+    }
+
+    public function updateStatus($id, $status) {
+        $sql = "UPDATE contact_submissions SET status = ? WHERE id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("si", $status, $id);
+        return $stmt->execute();
+    }
+
+    public function deleteSubmission($id) {
+        $sql = "DELETE FROM contact_submissions WHERE id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    public function getSubmissionStats() {
+        $sql = "SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
+                    SUM(CASE WHEN status = 'read' THEN 1 ELSE 0 END) as read_count,
+                    SUM(CASE WHEN status = 'replied' THEN 1 ELSE 0 END) as replied_count,
+                    SUM(CASE WHEN DATE(submitted_at) = CURDATE() THEN 1 ELSE 0 END) as today_count,
+                    SUM(CASE WHEN submitted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as week_count
+                FROM contact_submissions";
+
+        $result = $this->connection->query($sql);
+        if ($result) {
+            return $result->fetch_assoc();
+        }
+
+        return [
+            'total' => 0, 'new_count' => 0, 'read_count' => 0,
+            'replied_count' => 0, 'today_count' => 0, 'week_count' => 0
+        ];
+    }
+
+    public function markAsRead($id) {
+        return $this->updateStatus($id, 'read');
+    }
+
+    public function markAsReplied($id) {
+        return $this->updateStatus($id, 'replied');
+    }
+
+    public function archiveSubmission($id) {
+        return $this->updateStatus($id, 'archived');
+    }
+
+    // Close database connection
+    public function __destruct() {
+        if ($this->connection) {
+            $this->connection->close();
+        }
+    }
+}
 ?>

@@ -82,6 +82,8 @@ $structuredData = [
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-attachment: scroll;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .hero-bg-overlay {
@@ -105,16 +107,42 @@ $structuredData = [
 .hero-slide .badge {
     position: relative;
     z-index: 100;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
 }
 
 .hero-slide .btn {
     text-shadow: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* Debug: Add border to see slide boundaries */
+.hero-slide .badge {
+    background-color: rgba(255,255,255,0.9) !important;
+    color: #333 !important;
+    text-shadow: none;
+}
+
+/* Ensure background images are visible */
 .hero-slide {
-    border: 2px solid rgba(255,255,255,0.1);
+    background-color: transparent !important;
+}
+
+.hero-bg-image {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.hero-bg-overlay {
+    display: block !important;
+}
+
+/* Fix any conflicting background colors */
+.carousel-item {
+    background-color: transparent !important;
+}
+
+#heroCarousel {
+    background-color: transparent !important;
 }
 
 /* Mobile optimization */
@@ -182,8 +210,6 @@ $structuredData = [
                     <?php if (isset($bgImages[1]) && $bgImages[1]): ?>
                         <div class="hero-bg-image"
                              style="background-image: url('<?php echo htmlspecialchars($bgImages[1]); ?>'); z-index: 1;"></div>
-                        <div class="hero-bg-overlay"
-                             style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.8), rgba(220, 53, 69, 0.9)); z-index: 2;"></div>
                     <?php else: ?>
                         <div class="hero-bg-gradient"
                              style="background: linear-gradient(135deg, #dc3545, #c82333); z-index: 1;"></div>
@@ -257,8 +283,6 @@ $structuredData = [
                     <?php if (isset($bgImages[2]) && $bgImages[2]): ?>
                         <div class="hero-bg-image"
                              style="background-image: url('<?php echo htmlspecialchars($bgImages[2]); ?>'); z-index: 1;"></div>
-                        <div class="hero-bg-overlay"
-                             style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.8), rgba(13, 110, 253, 0.9)); z-index: 2;"></div>
                     <?php else: ?>
                         <div class="hero-bg-gradient"
                              style="background: linear-gradient(135deg, #0d6efd, #0b5ed7); z-index: 1;"></div>
@@ -330,8 +354,6 @@ $structuredData = [
                     <?php if (isset($bgImages[3]) && $bgImages[3]): ?>
                         <div class="hero-bg-image"
                              style="background-image: url('<?php echo htmlspecialchars($bgImages[3]); ?>'); z-index: 1;"></div>
-                        <div class="hero-bg-overlay"
-                             style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.8), rgba(25, 135, 84, 0.9)); z-index: 2;"></div>
                     <?php else: ?>
                         <div class="hero-bg-gradient"
                              style="background: linear-gradient(135deg, #198754, #157347); z-index: 1;"></div>
@@ -416,8 +438,6 @@ $structuredData = [
                     <?php if (isset($bgImages[4]) && $bgImages[4]): ?>
                         <div class="hero-bg-image"
                              style="background-image: url('<?php echo htmlspecialchars($bgImages[4]); ?>'); z-index: 1;"></div>
-                        <div class="hero-bg-overlay"
-                             style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.8), rgba(13, 202, 240, 0.9)); z-index: 2;"></div>
                     <?php else: ?>
                         <div class="hero-bg-gradient"
                              style="background: linear-gradient(135deg, #0dcaf0, #31d2f2); z-index: 1;"></div>

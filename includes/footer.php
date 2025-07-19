@@ -19,10 +19,10 @@
                     </div>
                     <div class="col-md-4 text-md-end mt-2 mt-md-0">
                         <div class="emergency-contacts">
-                            <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="btn btn-warning btn-lg me-2 emergency-call-btn">
-                                <i class="fas fa-phone me-1"></i><?php echo formatPhone(PHONE_PRIMARY); ?>
+                            <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="btn btn-warning btn-lg me-2 emergency-call-btn">
+                                <i class="fas fa-phone me-1"></i><?php echo formatPhone($SITE_SETTINGS['PHONE_PRIMARY']); ?>
                             </a>
-                            <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="btn btn-success btn-lg" target="_blank">
+                            <a href="https://wa.me/<?php echo $SITE_SETTINGS['WHATSAPP']; ?>" class="btn btn-success btn-lg" target="_blank">
                                 <i class="fab fa-whatsapp"></i>
                             </a>
                         </div>
@@ -43,7 +43,7 @@
                                     <i class="fas fa-plus-circle text-danger fs-2"></i>
                                 </div>
                                 <div>
-                                    <h4 class="mb-0 fw-bold"><?php echo SITE_NAME; ?></h4>
+                                    <h4 class="mb-0 fw-bold"><?php echo $SITE_SETTINGS['SITE_NAME']; ?></h4>
                                     <div class="brand-tagline">
                                         <span class="badge bg-warning text-dark">Since 2003</span>
                                         <span class="text-muted ms-2">21+ Years of Trust</span>
@@ -88,16 +88,16 @@
                         <div class="social-media">
                             <h6 class="fw-bold mb-3">Follow Us</h6>
                             <div class="social-links">
-                                <a href="<?php echo FACEBOOK; ?>" class="social-link facebook" target="_blank">
+                                <a href="<?php echo $SITE_SETTINGS['FACEBOOK']; ?>" class="social-link facebook" target="_blank">
                                     <i class="fab fa-facebook-f"></i>
                                 </a>
-                                <a href="<?php echo TWITTER; ?>" class="social-link twitter" target="_blank">
+                                <a href="<?php echo $SITE_SETTINGS['TWITTER']; ?>" class="social-link twitter" target="_blank">
                                     <i class="fab fa-twitter"></i>
                                 </a>
-                                <a href="<?php echo INSTAGRAM; ?>" class="social-link instagram" target="_blank">
+                                <a href="<?php echo $SITE_SETTINGS['INSTAGRAM']; ?>" class="social-link instagram" target="_blank">
                                     <i class="fab fa-instagram"></i>
                                 </a>
-                                <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="social-link whatsapp" target="_blank">
+                                <a href="https://wa.me/<?php echo $SITE_SETTINGS['WHATSAPP']; ?>" class="social-link whatsapp" target="_blank">
                                     <i class="fab fa-whatsapp"></i>
                                 </a>
                             </div>
@@ -189,14 +189,14 @@
                                         <span class="fw-bold text-warning">EMERGENCY HOTLINE</span>
                                     </div>
                                     <div class="emergency-number">
-                                        <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="emergency-link">
-                                            <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_PRIMARY); ?>
+                                        <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="emergency-link">
+                                            <i class="fas fa-phone me-2"></i><?php echo formatPhone($SITE_SETTINGS['PHONE_PRIMARY']); ?>
                                         </a>
-                                         <a href="tel:<?php echo formatPhoneForCall(PHONE_SECONDARY); ?>" class="emergency-link">
-                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_SECONDARY); ?>
+                                         <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_SECONDARY']); ?>" class="emergency-link">
+                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone($SITE_SETTINGS['PHONE_SECONDARY']); ?>
                                         </a>
-                                        <a href="tel:<?php echo formatPhoneForCall(PHONE_TERTIARY); ?>" class="emergency-link">
-                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone(PHONE_TERTIARY); ?>
+                                        <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_TERTIARY']); ?>" class="emergency-link">
+                                                <i class="fas fa-phone me-2"></i><?php echo formatPhone($SITE_SETTINGS['PHONE_TERTIARY']); ?>
                                         </a>
                                         <div class="availability-badge">
                                             <i class="fas fa-clock me-1"></i>24x7 Available
@@ -214,7 +214,7 @@
                                 <div class="address-info">
                                     <div class="address-content">
                                         <i class="fas fa-building text-muted me-2"></i>
-                                        <span class="address-text"><?php echo ADDRESS; ?></span>
+                                        <span class="address-text"><?php echo $SITE_SETTINGS['ADDRESS']; ?></span>
                                     </div>
                                     <div class="location-features mt-2">
                                         <div class="location-feature">
@@ -227,7 +227,7 @@
                                         </div>
                                     </div>
                                     <div class="location-actions mt-3">
-                                        <a href="https://maps.google.com/?q=<?php echo urlencode(ADDRESS); ?>"
+                                        <a href="https://maps.google.com/?q=<?php echo urlencode($SITE_SETTINGS['ADDRESS']); ?>"
                                            class="btn btn-outline-light btn-sm me-2"
                                            target="_blank">
                                             <i class="fas fa-directions me-1"></i>Directions
@@ -294,7 +294,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <div class="copyright-info">
-                            <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
+                            <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo $SITE_SETTINGS['SITE_NAME']; ?>. All rights reserved.</p>
                             <div class="legal-links mt-1">
                                 <a href="privacy-policy" class="legal-link">Privacy Policy</a>
                                 <span class="separator">•</span>
@@ -307,10 +307,10 @@
                     <div class="col-md-6 text-md-end mt-3 mt-md-0">
                         <div class="footer-actions">
                             <div class="action-buttons">
-                                <a href="tel:<?php echo formatPhoneForCall(PHONE_PRIMARY); ?>" class="btn btn-danger btn-lg emergency-footer-btn">
+                                <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="btn btn-danger btn-lg emergency-footer-btn">
                                     <i class="fas fa-phone me-2"></i>Emergency Call
                                 </a>
-                                <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="btn btn-success btn-lg ms-2" target="_blank">
+                                <a href="https://wa.me/<?php echo $SITE_SETTINGS['WHATSAPP']; ?>" class="btn btn-success btn-lg ms-2" target="_blank">
                                     <i class="fab fa-whatsapp me-2"></i>WhatsApp
                                 </a>
                             </div>

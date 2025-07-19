@@ -26,7 +26,7 @@ function loadSiteSettings() {
 
         $settingsDB = new SiteSettingsDB();
         $SITE_SETTINGS = $settingsDB->getSettingsArray();
-echo 1;
+
         // Validate that we got some settings
         if (empty($SITE_SETTINGS)) {
             throw new Exception("No settings loaded from database");
@@ -62,7 +62,7 @@ function defineSettingConstants() {
     
     // Site Information
     if (!defined('SITE_NAME')) define('SITE_NAME', $SITE_SETTINGS['SITE_NAME'] ?? 'Friends Ambulance Service');
-    if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', $SITE_SETTINGS['SITE_TAGLINE'] ?? 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
+    if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', $SITE_SETTINGS['SITE_TAGLINE'] ?? 'Raipurs Most Trusted Ambulance Service - 21+ Years');
     if (!defined('SITE_URL')) define('SITE_URL', $SITE_SETTINGS['SITE_URL'] ?? 'http://localhost/protc/Friend');
     if (!defined('META_KEYWORDS')) define('META_KEYWORDS', $SITE_SETTINGS['META_KEYWORDS'] ?? 'ambulance service raipur, emergency ambulance, BLS ambulance, ALS ambulance, 24x7 ambulance, chhattisgarh ambulance');
     
@@ -158,7 +158,7 @@ function formatPhoneForCall($phone) {
     
     return $phone;
 }
-echo $SITE_SETTINGS['PHONE_PRIMARY'];
+
 // Initialize settings when this file is included
 loadSiteSettings();
 

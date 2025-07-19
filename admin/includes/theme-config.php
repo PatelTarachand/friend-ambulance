@@ -4,7 +4,7 @@
 class AdminTheme {
     // Theme colors and gradients
     public static $colors = [
-        'primary' => '#667eea',
+        'primary' => '#ea6666ff',
         'secondary' => '#f093fb',
         'success' => '#4facfe',
         'warning' => '#43e97b',
@@ -156,6 +156,13 @@ class AdminTheme {
                 'title' => 'Site Settings',
                 'icon' => 'cog',
                 'url' => 'site-settings.php',
+                'badge' => null
+            ],
+            [
+                'id' => 'contact-submissions',
+                'title' => 'Contact Forms',
+                'icon' => 'envelope',
+                'url' => 'contact-submissions.php',
                 'badge' => null
             ],
             [

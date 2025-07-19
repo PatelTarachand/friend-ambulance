@@ -6,14 +6,12 @@ try {
     require_once 'admin/includes/database.php';
 
     $db = new GalleryDB();
-    $sliderDb = new SliderDB();
+
 
     // Get active gallery images
     $galleryImages = $db->getActive();
 
-    // Get active slider images for hero section
-    $sliderImages = $sliderDb->getActive();
-
+   
     // For compatibility, create featured images (first 6 items)
     $featuredImages = array_slice($galleryImages, 0, 6);
 
@@ -21,7 +19,7 @@ try {
     $imagesByCategory = ['ambulances' => $galleryImages];
 
     $hasCustomGallery = !empty($galleryImages);
-    $hasSliderImages = !empty($sliderImages);
+   
     $totalImages = count($galleryImages);
 
 } catch (Exception $e) {
@@ -63,203 +61,72 @@ $galleryStructuredData = [
 <?php echo json_encode($galleryStructuredData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); ?>
 </script>
 
-<!-- Hero Slider Styles -->
-<style>
-.hero-slider .carousel-item {
-    transition: transform 1s ease-in-out;
-}
-
-.hero-slider .carousel-fade .carousel-item {
-    opacity: 0;
-    transition: opacity 1s ease-in-out;
-}
-
-.hero-slider .carousel-fade .carousel-item.active {
-    opacity: 1;
-}
-
-.hero-bg {
-    transition: transform 8s ease-out;
-}
-
-.hero-slider .carousel-item.active .hero-bg {
-    transform: scale(1.05);
-}
-
-.stat-highlight {
-    background: rgba(255,255,255,0.1);
-    padding: 15px 20px;
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
-    text-align: center;
-}
-
-.carousel-control-prev,
-.carousel-control-next {
-    width: 5%;
-    opacity: 0.8;
-}
-
-.carousel-control-prev:hover,
-.carousel-control-next:hover {
-    opacity: 1;
-}
-
-.carousel-indicators button {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin: 0 5px;
-}
-</style>
 
 <!-- Main Content -->
 <main id="main-content" role="main">
-
-<?php if ($hasSliderImages): ?>
-<!-- Dynamic Hero Slider -->
-<section class="hero-slider position-relative" role="banner" aria-labelledby="gallery-main-heading">
-    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-        <div class="carousel-indicators">
-            <?php foreach ($sliderImages as $index => $slide): ?>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<?php echo $index; ?>"
-                        <?php echo $index === 0 ? 'class="active" aria-current="true"' : ''; ?>
-                        aria-label="Slide <?php echo $index + 1; ?>"></button>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="carousel-inner">
-            <?php foreach ($sliderImages as $index => $slide): ?>
-                <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                    <div class="hero-slide position-relative" style="height: 70vh; min-height: 500px;">
-                        <!-- Background Image -->
-                        <div class="hero-bg position-absolute w-100 h-100"
-                             style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?php echo htmlspecialchars($slide['image']); ?>') center/cover no-repeat;">
-                        </div>
-
-                        <!-- Content Overlay -->
-                        <div class="hero-content position-absolute top-50 start-50 translate-middle text-center text-white w-100">
-                            <div class="container">
-                                <div class="row justify-content-center">
-                                    <div class="col-lg-8">
-                                        <?php if ($index === 0): ?>
-                                            <div class="header-badge mb-3">
-                                                <span class="badge bg-primary fs-6 px-3 py-2">
-                                                    <i class="fas fa-images me-2"></i>GALLERY
-                                                </span>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <h1 id="gallery-main-heading" class="display-4 fw-bold mb-3">
-                                            <?php echo htmlspecialchars($slide['title']); ?>
-                                        </h1>
-
-                                        <?php if ($slide['subtitle']): ?>
-                                            <p class="lead mb-4">
-                                                <?php echo htmlspecialchars($slide['subtitle']); ?>
-                                            </p>
-                                        <?php endif; ?>
-
-                                        <?php if ($slide['button_text'] && $slide['button_link']): ?>
-                                            <a href="<?php echo htmlspecialchars($slide['button_link']); ?>"
-                                               class="btn btn-primary btn-lg me-3">
-                                                <?php echo htmlspecialchars($slide['button_text']); ?>
-                                                <i class="fas fa-arrow-right ms-2"></i>
-                                            </a>
-                                        <?php endif; ?>
-
-                                        <?php if ($index === 0): ?>
-                                            <div class="header-stats mt-4">
-                                                <div class="row g-3 justify-content-center">
-                                                    <div class="col-auto">
-                                                        <div class="stat-highlight text-white">
-                                                            <span class="fw-bold fs-4"><?php echo $totalImages; ?>+</span>
-                                                            <span>Images</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <div class="stat-highlight text-white">
-                                                            <span class="fw-bold fs-4">HD</span>
-                                                            <span>Quality</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <div class="stat-highlight text-white">
-                                                            <span class="fw-bold fs-4"><?php echo count($sliderImages); ?></span>
-                                                            <span>Slides</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-</section>
-<?php else: ?>
-<!-- Fallback Static Header -->
-<section class="premium-gallery-header bg-gradient-warning text-dark py-5 position-relative overflow-hidden"
+<!-- Enhanced Page Header -->
+<section class="premium-page-header bg-gradient-primary text-white py-5 position-relative overflow-hidden"
          role="banner"
          aria-labelledby="gallery-main-heading">
-    <div class="gallery-background-pattern" aria-hidden="true"></div>
+    <div class="header-background-pattern" aria-hidden="true"></div>
     <div class="container position-relative">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <div class="header-content">
-                    <div class="header-badge mb-3">
-                        <span class="badge bg-dark fs-6 px-3 py-2" role="status">
+                <div class="header-content" data-aos="fade-right">
+                    <div class="header-badge mb-3" data-aos="fade-up" data-aos-delay="100">
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2" role="status">
                             <i class="fas fa-images me-2" aria-hidden="true"></i>GALLERY
                         </span>
                     </div>
-                    <h1 id="gallery-main-heading" class="display-5 fw-bold mb-3">
-                        Our Ambulance Fleet & Facilities
-                    </h1>
-                    <p class="lead">Take a look at our modern ambulances, advanced equipment, and professional team</p>
-                    <div class="header-stats mt-4">
-                        <div class="row g-3">
+                    <h1 id="gallery-main-heading"
+                        class="display-4 fw-bold mb-3"
+                        data-aos="fade-up"
+                        data-aos-delay="200">Our Ambulance Fleet & Facilities</h1>
+                    <p class="lead mb-4"
+                       data-aos="fade-up"
+                       data-aos-delay="300">Explore our modern ambulances, advanced medical equipment, and professional facilities</p>
+                    <div class="header-stats"
+                         data-aos="fade-up"
+                         data-aos-delay="400"
+                         role="region"
+                         aria-label="Gallery statistics">
+                        <div class="row">
                             <div class="col-auto">
                                 <div class="stat-highlight">
-                                    <span class="fw-bold fs-4"><?php echo $totalImages; ?>+</span>
-                                    <span class="text-dark">Images</span>
+                                    <span class="fw-bold fs-4 counter"
+                                          data-target="<?php echo $totalImages; ?>"
+                                          aria-label="<?php echo $totalImages; ?> images in gallery">0</span>
+                                    <span class="text-warning">+ Images</span>
                                 </div>
                             </div>
+                           
                             <div class="col-auto">
                                 <div class="stat-highlight">
-                                    <span class="fw-bold fs-4">HD</span>
-                                    <span class="text-dark">Quality</span>
+                                    <span class="fw-bold fs-4"
+                                          aria-label="24 hours 7 days service">24x7</span>
+                                    <span class="text-warning">Available</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 text-end">
-                <div class="header-visual">
-                    <div class="gallery-icon-showcase" role="img" aria-label="Gallery showcase">
+            <div class="col-lg-4 text-center">
+                <div class="header-visual" data-aos="fade-left" data-aos-delay="500">
+                    <div class="ambulance-icon-circle" role="img" aria-label="Gallery showcase icon">
                         <i class="fas fa-images display-1" aria-hidden="true"></i>
+                    </div>
+                    <div class="pulse-rings" aria-hidden="true">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-<?php endif; ?>
+
 
 <!-- Gallery Search -->
 <section class="gallery-search-section py-4 bg-light">
@@ -294,7 +161,7 @@ $galleryStructuredData = [
          aria-labelledby="gallery-grid-heading">
     <div class="container">
         <div class="text-center mb-5" data-aos="fade-up">
-            <h2 id="gallery-grid-heading" class="fw-bold text-primary display-6">Our Visual Gallery</h2>
+            <h2 id="gallery-grid-heading" class="fw-bold text-primary display-6">Our Gallery</h2>
             <p class="lead text-muted">Explore our comprehensive collection of ambulances, equipment, and facilities</p>
         </div>
         <div class="row g-4" id="galleryContainer" role="grid" aria-label="Image gallery">

@@ -5,8 +5,9 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^([^\.]+)$ $1.php [NC,L]
 
-# Redirect .php extension to clean URLs
+# Redirect .php extension to clean URLs (but not for POST requests)
 RewriteCond %{THE_REQUEST} /([^.]+)\.php [NC]
+RewriteCond %{REQUEST_METHOD} !POST [NC]
 RewriteRule ^ /%1 [NC,L,R=301]
 
 # Security headers

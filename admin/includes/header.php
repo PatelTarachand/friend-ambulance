@@ -23,6 +23,7 @@ $page_titles = [
     'slider' => 'Slider Management',
     'hero-backgrounds' => 'Hero Backgrounds',
     'site-settings' => 'Site Settings',
+    'contact-submissions' => 'Contact Form Submissions',
     'database-status' => 'Database Status',
     'test-hero-backgrounds' => 'Test Hero Backgrounds'
 ];
@@ -328,7 +329,7 @@ $page_title = $page_titles[$current_page] ?? 'Admin Panel';
             border-color: #f1f5f9;
         }
 
-        .slide-card, .gallery-item, .setting-group {
+        .slide-card, .setting-group {
             background: rgba(255,255,255,0.95);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
@@ -337,17 +338,17 @@ $page_title = $page_titles[$current_page] ?? 'Admin Panel';
             backdrop-filter: blur(20px);
         }
 
-        .slide-card:hover, .gallery-item:hover {
+        .slide-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-hover);
         }
 
-        .hero-preview, .gallery-image {
+        .hero-preview {
             border-radius: 10px;
             transition: transform 0.3s ease;
         }
 
-        .hero-preview:hover, .gallery-image:hover {
+        .hero-preview:hover {
             transform: scale(1.02);
         }
 
@@ -417,10 +418,15 @@ $page_title = $page_titles[$current_page] ?? 'Admin Panel';
                             <i class="fas fa-images"></i>
                             Gallery
                         </a>
-                       
+
+
                         <a class="nav-link <?php echo $current_page === 'hero-backgrounds' ? 'active' : ''; ?>" href="hero-backgrounds.php">
                             <i class="fas fa-image"></i>
                             Slider Image
+                        </a>
+                         <a class="nav-link <?php echo $current_page === 'contact-submissions' ? 'active' : ''; ?>" href="contact-submissions.php">
+                            <i class="fas fa-person"></i>
+                            contact-Form
                         </a>
                         <a class="nav-link <?php echo $current_page === 'site-settings' ? 'active' : ''; ?>" href="site-settings.php">
                             <i class="fas fa-cog"></i>
