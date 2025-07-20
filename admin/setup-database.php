@@ -3,29 +3,98 @@
 
 require_once 'config/database.php';
 
-echo "<h2>Database Setup for Friends Ambulance Service</h2>";
+echo "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Database Setup - Friends Ambulance</title>
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .setup-card { max-width: 800px; margin: 0 auto; }
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+<div class='container'>
+    <div class='setup-card'>
+        <div class='card'>
+            <div class='card-header bg-primary text-white'>
+                <h3><i class='fas fa-database me-2'></i>Database Setup - Friends Ambulance Service</h3>
+            </div>
+            <div class='card-body'>";
 
 try {
     // Test connection
-    echo "<p>Testing database connection...</p>";
+    echo "<p class='status-info'><i class='fas fa-spinner fa-spin me-2'></i>Testing database connection...</p>";
     $connection = getDBConnection();
-    echo "<p style='color: green;'>✓ Database connection successful!</p>";
-    
+    echo "<p class='status-success'><i class='fas fa-check-circle me-2'></i>Database connection successful!</p>";
+
     // Create gallery table
-    echo "<p>Creating gallery table...</p>";
+    echo "<p class='status-info'><i class='fas fa-spinner fa-spin me-2'></i>Creating gallery table...</p>";
     $sql = "CREATE TABLE IF NOT EXISTS gallery (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        image VARCHAR(500) NOT NULL,
-        status TINYINT(1) DEFAULT 1,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        image_path VARCHAR(500) NOT NULL,
+        alt_text VARCHAR(255),
+        category VARCHAR(100) DEFAULT 'general',
+        display_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        is_featured BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
 
     if ($connection->query($sql)) {
-        echo "<p style='color: green;'>✓ Gallery table created successfully!</p>";
+        echo "<p class='status-success'><i class='fas fa-check-circle me-2'></i>Gallery table created successfully!</p>";
     } else {
         throw new Exception("Error creating gallery table: " . $connection->error);
+    }
+
+    // Create admin users table
+    echo "<p class='status-info'><i class='fas fa-spinner fa-spin me-2'></i>Creating admin users table...</p>";
+    $adminSQL = "CREATE TABLE IF NOT EXISTS admin_users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        full_name VARCHAR(255),
+        role ENUM('admin', 'moderator') DEFAULT 'admin',
+        is_active BOOLEAN DEFAULT TRUE,
+        last_login TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+
+    if ($connection->query($adminSQL)) {
+        echo "<p class='status-success'><i class='fas fa-check-circle me-2'></i>Admin Users table created successfully!</p>";
+
+        // Insert default admin user if not exists
+        $checkAdmin = $connection->query("SELECT id FROM admin_users WHERE username = 'admin'");
+        if ($checkAdmin->num_rows == 0) {
+            $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
+            $insertAdmin = $connection->prepare("INSERT INTO admin_users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)");
+            $username = 'admin';
+            $email = 'admin@friendsambulance.com';
+            $fullName = 'System Administrator';
+            $role = 'admin';
+            $insertAdmin->bind_param("sssss", $username, $defaultPassword, $email, $fullName, $role);
+
+            if ($insertAdmin->execute()) {
+                echo "<p class='status-success'><i class='fas fa-user-plus me-2'></i>Default admin user created (admin/admin123)</p>";
+            } else {
+                echo "<p class='status-error'><i class='fas fa-exclamation-triangle me-2'></i>Could not create default admin user: " . $connection->error . "</p>";
+            }
+        } else {
+            echo "<p class='status-info'><i class='fas fa-info-circle me-2'></i>Admin user already exists</p>";
+        }
+    } else {
+        throw new Exception("Error creating admin_users table: " . $connection->error);
     }
 
     // Create slider table

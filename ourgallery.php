@@ -1,39 +1,38 @@
 <?php
 include 'includes/header.php';
 
-// Get gallery and slider images from database
+// Initialize gallery variables (database-free approach)
+$galleryImages = [];
+$sliderImages = [];
+$featuredImages = [];
+$imagesByCategory = [];
+$hasCustomGallery = false;
+$hasSliderImages = false;
+$totalImages = 6;
+
+// Try to get database images, but don't fail if database is unavailable
 try {
-    require_once 'admin/includes/database.php';
+    if (file_exists('admin/includes/database.php') && file_exists('admin/config/database.php')) {
+        require_once 'admin/includes/database.php';
 
-    $db = new GalleryDB();
+        $db = new GalleryDB();
+        $sliderDb = new SliderDB();
 
+        // Get active gallery images
+        $galleryImages = $db->getActive();
+        $sliderImages = $sliderDb->getActive();
 
-    // Get active gallery images
-    $galleryImages = $db->getActive();
+        // For compatibility, create featured images (first 6 items)
+        $featuredImages = array_slice($galleryImages, 0, 6);
+        $imagesByCategory = ['ambulances' => $galleryImages];
 
-   
-    // For compatibility, create featured images (first 6 items)
-    $featuredImages = array_slice($galleryImages, 0, 6);
-
-    // Group images by category (for now, all in one category)
-    $imagesByCategory = ['ambulances' => $galleryImages];
-
-    $hasCustomGallery = !empty($galleryImages);
-   
-    $totalImages = count($galleryImages);
-
+        $hasCustomGallery = !empty($galleryImages);
+        $hasSliderImages = !empty($sliderImages);
+        $totalImages = count($galleryImages);
+    }
 } catch (Exception $e) {
-    // Fallback to empty arrays if database fails
-    $galleryImages = [];
-    $sliderImages = [];
-    $featuredImages = [];
-    $imagesByCategory = [];
-    $hasCustomGallery = false;
-    $hasSliderImages = false;
-    $totalImages = 0;
-
-    // Log error for debugging
-    error_log("Gallery database error: " . $e->getMessage());
+    // Silently continue with default values if database fails
+    // This ensures the page always loads
 }
 
 // Add structured data for better SEO

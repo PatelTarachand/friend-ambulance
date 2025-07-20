@@ -5,7 +5,8 @@
 // Site Information
 if (!defined('SITE_NAME')) define('SITE_NAME', 'Friends Ambulance Service');
 if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
-if (!defined('SITE_URL')) define('SITE_URL', 'http://localhost/protc/Friend');
+if (!defined('SITE_URL')) define('SITE_URL', 'https://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']));
+
 if (!defined('META_DESCRIPTION')) define('META_DESCRIPTION', 'Friends Ambulance Service provides 24/7 emergency ambulance services in Raipur, Chhattisgarh. BLS and ALS ambulances available with trained medical staff.');
 if (!defined('META_KEYWORDS')) define('META_KEYWORDS', 'ambulance service raipur, emergency ambulance, BLS ambulance, ALS ambulance, 24x7 ambulance, chhattisgarh ambulance, medical emergency, patient transport');
 

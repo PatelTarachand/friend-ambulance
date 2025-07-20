@@ -1,16 +1,4 @@
 <?php
-// Define essential constants first (emergency fallback)
-if (!defined('SITE_NAME')) define('SITE_NAME', 'Friends Ambulance Service');
-if (!defined('SITE_TAGLINE')) define('SITE_TAGLINE', 'Raipur\'s Most Trusted Ambulance Service - 21+ Years');
-if (!defined('META_DESCRIPTION')) define('META_DESCRIPTION', 'Friends Ambulance Service provides 24/7 emergency ambulance services in Raipur, Chhattisgarh.');
-if (!defined('META_KEYWORDS')) define('META_KEYWORDS', 'ambulance service raipur, emergency ambulance, BLS ambulance, ALS ambulance');
-if (!defined('PHONE_PRIMARY')) define('PHONE_PRIMARY', '93299 62163');
-if (!defined('EMAIL')) define('EMAIL', 'info@friendsambulance.com');
-if (!defined('ADDRESS')) define('ADDRESS', 'Raipur, Chhattisgarh');
-if (!defined('WHATSAPP')) define('WHATSAPP', '919329962163');
-if (!defined('FACEBOOK')) define('FACEBOOK', '#');
-if (!defined('TWITTER')) define('TWITTER', '#');
-if (!defined('INSTAGRAM')) define('INSTAGRAM', '#');
 
 // Define getCurrentPage function if not already defined
 if (!function_exists('getCurrentPage')) {
@@ -47,7 +35,7 @@ try {
 }
 
 // Fallback to static config if dynamic config failed
-if (!$configLoaded) {
+if ($configLoaded) {
     $staticConfigFile = __DIR__ . '/config.php';
     if (file_exists($staticConfigFile)) {
         require_once $staticConfigFile;
@@ -55,7 +43,6 @@ if (!$configLoaded) {
     }
 }
 
-// Configuration loaded - constants are already defined above
 
 $current_page = getCurrentPage();
 
@@ -161,9 +148,9 @@ define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3
             "hoursAvailable": "Mo-Su 00:00-23:59"
         },
         "sameAs": [
-            "<?php echo FACEBOOK; ?>",
-            "<?php echo TWITTER; ?>",
-            "<?php echo INSTAGRAM; ?>"
+            "<?php echo $SITE_SETTINGS['FACEBOOK']; ?>",
+            "<?php echo $SITE_SETTINGS['TWITTER']; ?>",
+            "<?php echo $SITE_SETTINGS['INSTAGRAM']; ?>"
         ]
     }
     </script>
@@ -194,13 +181,21 @@ define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3
         .emergency-bar { background: linear-gradient(45deg, #bb2837, #e74c3c); }
     </style>
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA and Mobile App Settings -->
     <meta name="theme-color" content="#0d6efd">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="<?php echo $SITE_SETTINGS['SITE_NAME']; ?>">
+
+    <!-- Icons (only if files exist) -->
+    <?php if (file_exists('assets/images/icons/icon-192x192.png')): ?>
     <link rel="apple-touch-icon" href="assets/images/icons/icon-192x192.png">
+    <?php endif; ?>
+
+    <?php if (file_exists('manifest.json')): ?>
+    <link rel="manifest" href="manifest.json">
+    <?php endif; ?>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
@@ -232,7 +227,7 @@ define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3
     <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="<?php echo $SITE_SETTINGS['SITE_URL']; ?>">
+            <a class="navbar-brand d-flex align-items-center" href="index.php">
                 <i class="fas fa-plus-circle text-danger me-2 fs-2"></i>
                 <div>
                     <div class="fw-bold text-primary fs-4"><?php echo $SITE_SETTINGS['SITE_NAME']; ?></div>
@@ -247,22 +242,22 @@ define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto me-4">
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'home' ? 'active' : ''; ?>" href="<?php echo SITE_URL; ?>">Home</a>
+                        <a class="nav-link <?php echo $current_page === 'home' ? 'active' : ''; ?>" href="index.php">Home </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'about' ? 'active' : ''; ?>" href="about">About Us</a>
+                        <a class="nav-link <?php echo $current_page === 'about' ? 'active' : ''; ?>" href="about.php">About Us</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'services' ? 'active' : ''; ?>" href="services">Services</a>
+                        <a class="nav-link <?php echo $current_page === 'services' ? 'active' : ''; ?>" href="services.php">Services</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'gallery' ? 'active' : ''; ?>" href="gallery">Gallery</a>
+                        <a class="nav-link <?php echo $current_page === 'ourgallery' ? 'active' : ''; ?>" href="ourgallery.php">Gallery</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'contact' ? 'active' : ''; ?>" href="contact">Contact</a>
+                        <a class="nav-link <?php echo $current_page === 'contact' ? 'active' : ''; ?>" href="contact.php">Contact</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'faq' ? 'active' : ''; ?>" href="faq">FAQ</a>
+                        <a class="nav-link <?php echo $current_page === 'faq' ? 'active' : ''; ?>" href="faq.php">FAQ</a>
                     </li>
                 </ul>
                 
@@ -270,7 +265,7 @@ define('GOOGLE_MAPS_EMBED', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3
                     <a href="tel:<?php echo formatPhoneForCall($SITE_SETTINGS['PHONE_PRIMARY']); ?>" class="btn btn-danger btn-sm">
                         <i class="fas fa-phone me-1"></i> Call Now
                     </a>
-                    <a href="https://wa.me/<?php echo WHATSAPP; ?>" class="btn btn-success btn-sm" target="_blank">
+                    <a href="https://wa.me/<?php echo defined('WHATSAPP') ? WHATSAPP : '919329962163'; ?>" class="btn btn-success btn-sm" target="_blank">
                         <i class="fab fa-whatsapp me-1"></i> WhatsApp
                     </a>
                 </div>

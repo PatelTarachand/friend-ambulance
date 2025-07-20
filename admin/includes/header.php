@@ -432,7 +432,7 @@ $page_title = $page_titles[$current_page] ?? 'Admin Panel';
                             <i class="fas fa-cog"></i>
                             Site Settings
                         </a>
-                      
+                       
 
                         <hr class="nav-divider">
 

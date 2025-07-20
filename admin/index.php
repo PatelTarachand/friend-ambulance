@@ -13,19 +13,37 @@ $error = '';
 if ($_POST) {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    
-    // Simple hardcoded credentials (you can change these)
-    $admin_username = 'admin';
-    $admin_password = 'admin123';
-    
-    if ($username === $admin_username && $password === $admin_password) {
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['admin_username'] = $username;
-        $_SESSION['login_time'] = time();
-        header('Location: dashboard.php');
-        exit;
-    } else {
-        $error = 'Invalid username or password';
+
+    try {
+        // Use database authentication
+        require_once 'includes/database.php';
+        $adminDb = new AdminDB();
+
+        $user = $adminDb->authenticate($username, $password);
+
+        if ($user) {
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_username'] = $user['username'];
+            $_SESSION['admin_user_id'] = $user['id'];
+            $_SESSION['admin_full_name'] = $user['full_name'];
+            $_SESSION['admin_role'] = $user['role'];
+            $_SESSION['login_time'] = time();
+            header('Location: dashboard.php');
+            exit;
+        } else {
+            $error = 'Invalid username or password';
+        }
+    } catch (Exception $e) {
+        // Fallback to hardcoded credentials if database fails
+        if ($username === 'admin' && $password === 'admin123') {
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_username'] = $username;
+            $_SESSION['login_time'] = time();
+            header('Location: dashboard.php');
+            exit;
+        } else {
+            $error = 'Database error: ' . $e->getMessage();
+        }
     }
 }
 ?>

@@ -810,4 +810,104 @@ class ContactFormDB {
         }
     }
 }
+
+// Admin Users Database Class
+class AdminDB {
+    private $connection;
+
+    public function __construct() {
+        $this->initDatabase();
+    }
+
+    // Initialize database connection and create table
+    private function initDatabase() {
+        try {
+            // Get connection from config
+            $this->connection = getDBConnection();
+
+            // Create admin_users table if not exists
+            $sql = "CREATE TABLE IF NOT EXISTS admin_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                full_name VARCHAR(255),
+                role ENUM('admin', 'moderator') DEFAULT 'admin',
+                is_active BOOLEAN DEFAULT TRUE,
+                last_login TIMESTAMP NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )";
+
+            if (!$this->connection->query($sql)) {
+                throw new Exception("Error creating admin_users table: " . $this->connection->error);
+            }
+
+            // Insert default admin user if not exists
+            $this->createDefaultAdmin();
+
+        } catch (Exception $e) {
+            throw new Exception("AdminDB initialization failed: " . $e->getMessage());
+        }
+    }
+
+    // Create default admin user
+    private function createDefaultAdmin() {
+        $checkAdmin = $this->connection->query("SELECT id FROM admin_users WHERE username = 'admin'");
+        if ($checkAdmin->num_rows == 0) {
+            $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
+            $stmt = $this->connection->prepare("INSERT INTO admin_users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)");
+            $username = 'admin';
+            $email = 'admin@friendsambulance.com';
+            $fullName = 'System Administrator';
+            $role = 'admin';
+            $stmt->bind_param("sssss", $username, $defaultPassword, $email, $fullName, $role);
+            $stmt->execute();
+        }
+    }
+
+    // Authenticate user
+    public function authenticate($username, $password) {
+        $stmt = $this->connection->prepare("SELECT id, username, password, email, full_name, role, is_active FROM admin_users WHERE username = ? AND is_active = 1");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows == 1) {
+            $user = $result->fetch_assoc();
+            if (password_verify($password, $user['password'])) {
+                // Update last login
+                $updateStmt = $this->connection->prepare("UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?");
+                $updateStmt->bind_param("i", $user['id']);
+                $updateStmt->execute();
+
+                return $user;
+            }
+        }
+        return false;
+    }
+
+    // Get user by ID
+    public function getUserById($id) {
+        $stmt = $this->connection->prepare("SELECT id, username, email, full_name, role, is_active, last_login, created_at FROM admin_users WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // Get all users
+    public function getAllUsers() {
+        $result = $this->connection->query("SELECT id, username, email, full_name, role, is_active, last_login, created_at FROM admin_users ORDER BY created_at DESC");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // Update user password
+    public function updatePassword($id, $newPassword) {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->connection->prepare("UPDATE admin_users SET password = ? WHERE id = ?");
+        $stmt->bind_param("si", $hashedPassword, $id);
+        return $stmt->execute();
+    }
+}
 ?>
